@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-paper font-sans text-ink antialiased;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-serif;
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-forest ring-offset-2 ring-offset-paper;
+  }
+}
+
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-[1280px] px-6;
+  }
+  .card {
+    @apply rounded-2xl border border-sand bg-cream;
+  }
+  .input-base {
+    @apply w-full rounded-xl border border-sand bg-cream px-3.5 py-2.5 text-sm text-ink
+      placeholder:text-faint focus:border-forest focus:outline-none focus:ring-1 focus:ring-forest
+      disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  /* label eyebrow used throughout the design */
+  .eyebrow {
+    @apply text-xs font-bold uppercase tracking-[.08em] text-faint;
+  }
+  /* skeleton shimmer matching the reference */
+  .sk {
+    background: linear-gradient(90deg, #ece6d8 0px, #f4efe3 160px, #ece6d8 320px);
+    background-size: 680px 100%;
+    animation: sk 1.3s infinite linear;
+  }
+}
+
+@keyframes sk {
+  0% {
+    background-position: -340px 0;
+  }
+  100% {
+    background-position: 340px 0;
+  }
+}
+
+/* custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-sand;
+}
+
+/* range slider accent */
+input[type='range'] {
+  accent-color: #2f5d3a;
+}

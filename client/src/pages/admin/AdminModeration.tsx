@@ -1,0 +1,161 @@
+import { useEffect, useState } from 'react';
+import { AlertTriangle, Star } from 'lucide-react';
+import { adminService } from '@/services/admin.service';
+import { orchardService } from '@/services/orchard.service';
+import { Spinner } from '@/components/ui';
+import { useToast } from '@/context/ToastContext';
+import { orchardSurface } from '@/lib/gradients';
+import { timeAgo, titleCase } from '@/lib/format';
+import { getErrorMessage } from '@/lib/apiClient';
+import type { Orchard, User } from '@/types';
+
+interface ReportedReview {
+  _id: string;
+  comment: string;
+  orchardId?: { gardenName: string };
+  renterId?: { name: string };
+  createdAt: string;
+}
+
+export default function AdminModeration() {
+  const toast = useToast();
+  const [pending, setPending] = useState<Orchard[]>([]);
+  const [reports, setReports] = useState<ReportedReview[]>([]);
+  const [featured, setFeatured] = useState<Orchard[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = () => {
+    Promise.all([adminService.moderationQueue(), adminService.reportedReviews(), orchardService.getFeatured()])
+      .then(([p, r, f]) => {
+        setPending(p);
+        setReports(r as ReportedReview[]);
+        setFeatured(f);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(load, []);
+
+  const moderate = async (id: string, action: 'approve' | 'reject' | 'unfeature', msg: string) => {
+    try {
+      await adminService.moderate(id, action);
+      toast.success(msg);
+      load();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
+  };
+
+  if (loading)
+    return (
+      <main className="flex justify-center py-24">
+        <Spinner className="h-8 w-8" />
+      </main>
+    );
+
+  return (
+    <main className="mx-auto max-w-[1240px] px-6 pb-16 pt-6">
+      <div className="mb-[18px]">
+        <h1 className="font-serif text-[27px] font-semibold">Orchard moderation</h1>
+        <p className="mt-1 text-[13.5px] text-faint">Review submissions, reports and featured placements</p>
+      </div>
+
+      <div className="flex flex-wrap items-start gap-5">
+        <div className="flex min-w-[320px] flex-[2_1_460px] flex-col gap-[18px]">
+          {/* Pending submissions */}
+          <section className="rounded-[18px] border border-sand bg-cream p-[22px]">
+            <div className="mb-3.5 flex items-center justify-between">
+              <h2 className="font-serif text-[18px] font-semibold">Pending submissions</h2>
+              <span className="rounded-full bg-[#fbf2dd] px-2.5 py-[3px] text-xs font-bold text-[#a9772b]">
+                {pending.length} new
+              </span>
+            </div>
+            {pending.length === 0 ? (
+              <p className="py-4 text-center text-sm text-faint">No submissions awaiting review.</p>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {pending.map((o) => {
+                  const seller = o.sellerId as User;
+                  return (
+                    <div key={o._id} className="flex flex-wrap items-center gap-3.5 rounded-[13px] border border-chip p-3">
+                      <div className="h-[52px] w-[52px] flex-none rounded-[10px]" style={orchardSurface(o.thumbnail, o.fruitTypes, o._id)} />
+                      <div className="min-w-[160px] flex-1 basis-[180px]">
+                        <div className="font-serif text-[15.5px] font-semibold">{o.gardenName}</div>
+                        <div className="mt-0.5 text-[12.5px] text-faint">
+                          {seller?.name || 'Seller'} · {o.state} · {o.fruitTypes[0]}
+                        </div>
+                      </div>
+                      <div className="flex flex-none gap-2">
+                        <button onClick={() => moderate(o._id, 'approve', 'Listing approved')} className="rounded-[9px] bg-forest px-[15px] py-2.5 text-[12.5px] font-bold text-cream">
+                          Approve
+                        </button>
+                        <button onClick={() => moderate(o._id, 'reject', 'Listing rejected')} className="rounded-[9px] bg-[#f3e7e1] px-[15px] py-2.5 text-[12.5px] font-semibold text-[#a05a45]">
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+
+          {/* Report queue */}
+          <section className="rounded-[18px] border border-sand bg-cream p-[22px]">
+            <h2 className="mb-3.5 font-serif text-[18px] font-semibold">Report queue</h2>
+            {reports.length === 0 ? (
+              <p className="py-4 text-center text-sm text-faint">No open reports.</p>
+            ) : (
+              <div className="flex flex-col gap-2.5">
+                {reports.map((r) => (
+                  <div key={r._id} className="flex items-center gap-3.5 rounded-xl bg-[#faf7ee] px-3.5 py-3">
+                    <span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-[9px] bg-[#f3e7e1]">
+                      <AlertTriangle className="h-[17px] w-[17px] text-[#a05a45]" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[13.5px] font-bold">{r.orchardId?.gardenName || 'Orchard'}</div>
+                      <div className="truncate text-xs text-faint">
+                        Reported review · {r.renterId?.name} · {timeAgo(r.createdAt)}
+                      </div>
+                    </div>
+                    <button className="flex-none rounded-lg border border-sand bg-white px-2.5 py-[7px] text-xs font-semibold text-ink">
+                      Review
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+
+        {/* Featured */}
+        <section className="min-w-[280px] flex-1 basis-[280px] rounded-[18px] border border-sand bg-cream p-[22px]">
+          <div className="mb-3.5 flex items-center gap-2">
+            <Star className="h-[18px] w-[18px] fill-gold text-gold" />
+            <h2 className="font-serif text-[18px] font-semibold">Featured orchards</h2>
+          </div>
+          {featured.length === 0 ? (
+            <p className="py-4 text-center text-sm text-faint">No featured orchards.</p>
+          ) : (
+            featured.map((o) => (
+              <div key={o._id} className="flex items-center gap-2.5 border-t border-chip py-2.5">
+                <div className="h-10 w-10 flex-none rounded-[10px]" style={orchardSurface(o.thumbnail, o.fruitTypes, o._id)} />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[13px] font-bold">{o.gardenName}</div>
+                  <div className="truncate text-[11.5px] text-faint">
+                    {o.district}, {o.state}
+                  </div>
+                </div>
+                <button onClick={() => moderate(o._id, 'unfeature', 'Removed from featured')} className="flex-none text-[11.5px] font-semibold text-[#a05a45]">
+                  Remove
+                </button>
+              </div>
+            ))
+          )}
+          <p className="mt-3 text-[11px] text-faint">{titleCase('tip')}: feature orchards from the listing moderation actions.</p>
+        </section>
+      </div>
+    </main>
+  );
+}
