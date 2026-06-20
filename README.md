@@ -131,21 +131,3 @@ Approved --> Booked
 ```
 
 ---
-
-# Booking Flow
-
-```mermaid
-sequenceDiagram
-
-Seller->>Admin:
-Submit Orchard
-
-Admin->>Seller:
-Approve
-
-Renter->>Seller:
-Request Booking
-
-Seller->>Renter:
-Accept
-```
