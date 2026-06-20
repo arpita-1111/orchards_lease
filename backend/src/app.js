@@ -27,7 +27,10 @@ app.set('trust proxy', 1);
 app.use(helmet());
 app.use(
   cors({
-    origin: [config.clientUrl, config.adminUrl],
+    origin: [
+      'http://localhost:5173',
+      'https://orchardslease.vercel.app'
+    ],
     credentials: true,
   })
 );
