@@ -50,7 +50,7 @@ const config = {
 
   cookie: {
     secret: process.env.COOKIE_SECRET || 'dev_cookie_secret',
-    domain: process.env.COOKIE_DOMAIN || 'localhost',
+    domain: process.env.COOKIE_DOMAIN || undefined,
   },
 
   admin: {

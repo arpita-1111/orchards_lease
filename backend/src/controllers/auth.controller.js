@@ -29,13 +29,17 @@ import {
 
 const REFRESH_COOKIE = 'refreshToken';
 
-const refreshCookieOptions = (remember) => ({
-  httpOnly: true,
-  secure: config.isProd,
-  sameSite: config.isProd ? 'none' : 'lax',
-  path: '/',
-  maxAge: ms(remember ? config.jwt.refreshExpiresInRemember : config.jwt.refreshExpiresIn),
-});
+const refreshCookieOptions = (remember) => {
+  const opts = {
+    httpOnly: true,
+    secure: config.isProd,
+    sameSite: config.isProd ? 'none' : 'lax',
+    path: '/',
+    maxAge: ms(remember ? config.jwt.refreshExpiresInRemember : config.jwt.refreshExpiresIn),
+  };
+  if (config.cookie && config.cookie.domain) opts.domain = config.cookie.domain;
+  return opts;
+};
 
 const setRefreshCookie = (res, token, remember) =>
   res.cookie(REFRESH_COOKIE, token, refreshCookieOptions(remember));
