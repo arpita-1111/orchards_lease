@@ -14,7 +14,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <ToastProvider>
         <AuthProvider>
           <MarketplaceProvider>
-            <BrowserRouter>
+            <BrowserRouter future={{ v7_startTransition: false, v7_relativeSplatPath: false }}>
               <App />
             </BrowserRouter>
           </MarketplaceProvider>

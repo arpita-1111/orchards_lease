@@ -33,7 +33,7 @@ interface AuthContextValue {
   updateUser: (patch: Partial<User>) => void;
 }
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+const BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
