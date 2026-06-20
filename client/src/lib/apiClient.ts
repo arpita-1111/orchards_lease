@@ -6,6 +6,14 @@ import axios, {
 
 const BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
 
+// Warn in production if no absolute API URL was provided — common cause of 404s
+if (import.meta.env.PROD && BASE_URL === '/api/v1') {
+  // eslint-disable-next-line no-console
+  console.warn(
+    'Warning: no VITE_API_URL provided at build time. Requests to /api/v1 will be sent to the frontend origin and may 404 on static hosts (e.g. Vercel).\nSet VITE_API_URL to your API base or configure platform rewrites. See client/DEPLOYMENT.md.'
+  );
+}
+
 /* ----------------------- In-memory token store --------------------- */
 let accessToken: string | null = null;
 let sessionId: string | null = localStorage.getItem('ol-session-id');
