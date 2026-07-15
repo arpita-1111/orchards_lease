@@ -51,6 +51,7 @@ export function Navbar() {
   const isAdmin = role === 'admin';
 
   const handleLogout = async () => {
+    setMenuOpen(false);
     await logout();
     navigate('/');
   };
@@ -144,7 +145,6 @@ export function Navbar() {
             <div className="relative ml-1.5">
               <button
                 onClick={() => setMenuOpen((o) => !o)}
-                onBlur={() => setTimeout(() => setMenuOpen(false), 150)}
                 className="flex items-center gap-1.5 rounded-full border border-sand bg-cream py-1 pl-1.5 pr-2.5"
               >
                 <span
@@ -157,31 +157,41 @@ export function Navbar() {
               </button>
 
               {menuOpen && (
-                <div className="absolute right-0 top-[46px] z-[60] w-[228px] animate-fadeup overflow-hidden rounded-[14px] border border-sand bg-cream shadow-card">
-                  <div className="flex items-center gap-2.5 border-b border-chip px-4 py-3.5">
-                    <span
-                      className="flex h-[38px] w-[38px] items-center justify-center rounded-full text-[13px] font-bold text-cream"
-                      style={{ background: avatarGradient(role) }}
-                    >
-                      {initialsOf(user.name)}
-                    </span>
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-bold">{user.name}</div>
-                      <div className="text-[11.5px] capitalize text-faint">{role} account</div>
+                <>
+                  <div
+                    className="fixed inset-0 z-50 cursor-default"
+                    onClick={() => setMenuOpen(false)}
+                  />
+                  <div className="absolute right-0 top-[46px] z-[60] w-[228px] animate-fadeup overflow-hidden rounded-[14px] border border-sand bg-cream shadow-card">
+                    <div className="flex items-center gap-2.5 border-b border-chip px-4 py-3.5">
+                      <span
+                        className="flex h-[38px] w-[38px] items-center justify-center rounded-full text-[13px] font-bold text-cream"
+                        style={{ background: avatarGradient(role) }}
+                      >
+                        {initialsOf(user.name)}
+                      </span>
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-bold">{user.name}</div>
+                        <div className="text-[11.5px] capitalize text-faint">{role} account</div>
+                      </div>
                     </div>
+                    {!isAdmin && (
+                      <Link
+                        to="/profile"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-[13.5px] font-semibold text-ink hover:bg-[#f4f0e3]"
+                      >
+                        <UserIcon className="h-4 w-4 text-sub" /> My profile
+                      </Link>
+                    )}
+                    <button
+                      onClick={handleLogout}
+                      className="flex w-full items-center gap-2.5 border-t border-chip px-4 py-2.5 text-[13.5px] font-semibold text-[#a05a45] hover:bg-[#f7ece6]"
+                    >
+                      <LogOut className="h-4 w-4" /> Log out
+                    </button>
                   </div>
-                  {!isAdmin && (
-                    <Link to="/profile" className="flex items-center gap-2.5 px-4 py-2.5 text-[13.5px] font-semibold text-ink hover:bg-[#f4f0e3]">
-                      <UserIcon className="h-4 w-4 text-sub" /> My profile
-                    </Link>
-                  )}
-                  <button
-                    onClick={handleLogout}
-                    className="flex w-full items-center gap-2.5 border-t border-chip px-4 py-2.5 text-[13.5px] font-semibold text-[#a05a45] hover:bg-[#f7ece6]"
-                  >
-                    <LogOut className="h-4 w-4" /> Log out
-                  </button>
-                </div>
+                </>
               )}
             </div>
           ) : (

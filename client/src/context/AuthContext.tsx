@@ -103,6 +103,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     try {
       await authService.logout();
+    } catch {
+      // Ignore API logout failures so we still clear client auth state and proceed
     } finally {
       handleAuthFailure();
     }
