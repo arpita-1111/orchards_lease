@@ -42,6 +42,7 @@ export default function App() {
         <Route path="explore" element={<ExplorePage />} />
         <Route path="orchards/:slug" element={<OrchardDetailPage />} />
 
+        {/* Renter Specific Dashboard Routes */}
         <Route
           path="wishlist"
           element={
@@ -66,10 +67,12 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        
+        {/* Renter Specific Profile Navigation Target */}
         <Route
-          path="profile"
+          path="renter/profile"
           element={
-            <ProtectedRoute roles={['renter', 'seller']}>
+            <ProtectedRoute roles={['renter']}>
               <ProfilePage />
             </ProtectedRoute>
           }
@@ -89,6 +92,9 @@ export default function App() {
           <Route path="orchards/new" element={<OrchardForm />} />
           <Route path="orchards/:id/edit" element={<OrchardForm />} />
           <Route path="bookings" element={<SellerBookings />} />
+          
+          {/* Seller Specific Profile Route (Resolves to /seller/profile) */}
+          <Route path="profile" element={<ProfilePage />} />
         </Route>
 
         {/* Admin */}
