@@ -244,6 +244,20 @@ export default function OrchardDetailPage() {
               </div>
             ))}
           </div>
+          
+          {/* Soil Composition Details Block */}
+          <h2 className="mb-3.5 font-serif text-[19px] font-semibold">Soil &amp; Land Quality</h2>
+          <div className="mb-7 rounded-xl border border-sand bg-cream p-4">
+            <div className="flex flex-wrap justify-between items-center gap-3 border-b border-chip pb-3 mb-3">
+              <span className="text-sm font-bold text-ink">Soil Classification</span>
+              <span className="rounded-full bg-avail px-3 py-1 text-xs font-bold text-forest">
+                {(orchard as any).soilType || 'Loamy'}
+              </span>
+            </div>
+            <p className="text-sm leading-relaxed text-[#3a4632]">
+              {(orchard as any).soilDescription || 'No secondary nutritional details provided by owner yet. This classification represents general soil compositions typical to the regional district area.'}
+            </p>
+          </div>
 
           {/* Water & Irrigation Systems Component Block */}
           <h2 className="mb-3.5 font-serif text-[19px] font-semibold">Water &amp; Irrigation Systems</h2>

@@ -30,16 +30,13 @@ const empty = {
   amenities: [] as string[],
   available: true,
 
-  irrigationMethod: 'Drip',
-  waterSource: 'Borewell',
-  irrigationFrequency: 'Weekly',
+  soilType: 'Loamy',
+  soilDescription: '',
 
 
   plantationYear: 2020,
 
   images: [] as LocalOrchardImage[],
-
-
 };
 
 export default function OrchardForm() {
@@ -90,11 +87,13 @@ export default function OrchardForm() {
       irrigationFrequency: (o as any).irrigationFrequency || 'Weekly',
 
 
+     soilType: (o as any).soilType || 'Loamy',
+      soilDescription: (o as any).soilDescription || '',
+
+
       plantationYear: (o as any).plantationYear || 2020,
 
       images: (o.images as unknown as LocalOrchardImage[]) || [],
-
-
     });
 
   const set = (k: string, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
@@ -209,30 +208,30 @@ export default function OrchardForm() {
           </Select>
         </Card>
 
-      {/* Step 3: Irrigation & Water Management Section */}
+        {/* Step 3: Soil Composition Section */}
         <Card className="p-6">
-          <p className="mb-3 text-sm font-semibold">Irrigation &amp; Water Management</p>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Select label="Irrigation Method" value={form.irrigationMethod} onChange={(e) => set('irrigationMethod', e.target.value)}>
-              <option value="Drip">Drip Irrigation</option>
-              <option value="Sprinkler">Sprinkler System</option>
-              <option value="Flood">Flood/Surface</option>
-              <option value="Manual">Manual Watering</option>
+          <p className="mb-3 text-sm font-semibold">Soil Composition &amp; Quality</p>
+          <div className="grid gap-4 sm:grid-cols-1">
+            <Select label="Primary Soil Type" value={form.soilType} onChange={(e) => set('soilType', e.target.value)}>
+              <option value="Loamy">Loamy Soil (Ideal Cultivation Blend)</option>
+              <option value="Clayey">Clayey Soil (High Nutrient Retention)</option>
+              <option value="Sandy">Sandy Soil (Rapid Drainage)</option>
+              <option value="Alluvial">Alluvial Soil (Highly Fertile Silt)</option>
+              <option value="Black">Black/Regur Soil (Excellent for Cotton &amp; Certain Fruits)</option>
+              <option value="Red">Red &amp; Yellow Soil (Iron-rich Drainage)</option>
             </Select>
 
-            <Select label="Primary Water Source" value={form.waterSource} onChange={(e) => set('waterSource', e.target.value)}>
-              <option value="Borewell">Borewell / Tube Well</option>
-              <option value="Canal">River / Canal System</option>
-              <option value="Open Well">Open Well</option>
-              <option value="Rainfed">Rainwater Harvesting / Pond</option>
-            </Select>
-
-            <Select label="Watering Frequency" value={form.irrigationFrequency} onChange={(e) => set('irrigationFrequency', e.target.value)}>
-              <option value="Daily">Daily</option>
-              <option value="Alternative Days">Alternate Days</option>
-              <option value="Weekly">Weekly</option>
-              <option value="Bi-weekly">Twice a Month</option>
-            </Select>
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-sub">
+                Custom Soil Description / pH Details
+              </label>
+              <textarea
+                value={form.soilDescription}
+                onChange={(e) => set('soilDescription', e.target.value)}
+                className="w-full h-20 rounded-xl border border-sand bg-cream px-4 py-2.5 text-sm text-ink outline-none focus:border-forest resize-none"
+                placeholder="Describe nutrient conditions, fertilizer history, organic matter, or approximate pH levels..."
+              />
+            </div>
           </div>
         </Card>
 
