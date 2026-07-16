@@ -44,6 +44,16 @@ export default function OrchardDetailPage() {
   const [bookingOpen, setBookingOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+// Crop season dictionary mapping layout rules
+  const cropSeasons: Record<string, string> = {
+    apple: 'August - October (Autumn Peak)',
+    mango: 'April - July (Summer Peak)',
+    orange: 'November - January (Winter Peak)',
+    banana: 'Year-round Availability',
+    grapes: 'January - April (Spring Harvest)',
+    pomegranate: 'September - February (Winter Harvest)'
+  };
+
   useEffect(() => {
     setLoading(true);
     window.scrollTo(0, 0);
@@ -220,12 +230,16 @@ export default function OrchardDetailPage() {
             ))}
           </div>
 
-          <h2 className="mb-3.5 font-serif text-[19px] font-semibold">Fruit varieties</h2>
-          <div className="mb-7 flex flex-wrap gap-2">
+         <h2 className="mb-3.5 font-serif text-[19px] font-semibold">Crop Variety &amp; Seasonal Info</h2>
+          <div className="mb-7 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {orchard.fruitTypes.map((f) => (
-              <span key={f} className="rounded-full bg-chip px-3.5 py-2 text-[13px] font-semibold text-[#3a4632]">
-                {titleCase(f)}
-              </span>
+              <div key={f} className="flex flex-col rounded-xl border border-sand bg-cream p-3.5">
+                <div className="text-sm font-bold text-ink">{titleCase(f)}</div>
+                <div className="mt-1 flex items-center gap-1.5 text-xs text-forest font-semibold">
+                  <span className="inline-block h-2 w-2 rounded-full bg-forest animate-pulse" />
+                  {cropSeasons[f.toLowerCase()] || 'Check with owner for specific harvest schedules'}
+                </div>
+              </div>
             ))}
           </div>
 
