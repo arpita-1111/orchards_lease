@@ -115,6 +115,8 @@ export default function OrchardDetailPage() {
   const fee = Math.round(orchard.price * 0.08);
   const dep = Math.round(orchard.price * 0.15);
   const saved = isSaved(orchard._id);
+  const plantationYear = (orchard as any).plantationYear || 2020;
+  const calculatedAge = 2026 - plantationYear;
 
   const stats = [
     { k: 'Total trees', v: orchard.totalTrees.toLocaleString() },
@@ -122,7 +124,7 @@ export default function OrchardDetailPage() {
     { k: 'Expected yield', v: `${orchard.expectedYield.toLocaleString()} kg` },
     { k: 'Plot area', v: `${orchard.totalArea} ${orchard.areaUnit}` },
     { k: 'Harvest window', v: formatDate(orchard.estimatedHarvestDate) },
-    { k: 'Listing views', v: orchard.viewCount.toLocaleString() },
+    { k: 'Orchard Maturity', v: `${calculatedAge > 0 ? calculatedAge : 0} years old (Est. ${plantationYear})` },
   ];
 
   // Dynamic nearby facilities matching issue specifications

@@ -29,7 +29,11 @@ const empty = {
   price: 0,
   amenities: [] as string[],
   available: true,
+
+  plantationYear: 2020,
+
   images: [] as LocalOrchardImage[],
+
 };
 
 export default function OrchardForm() {
@@ -75,7 +79,11 @@ export default function OrchardForm() {
       price: o.price,
       amenities: o.amenities,
       available: o.available,
+
+      plantationYear: (o as any).plantationYear || 2020,
+
       images: (o.images as unknown as LocalOrchardImage[]) || [],
+
     });
 
   const set = (k: string, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
@@ -161,6 +169,15 @@ export default function OrchardForm() {
           <Input label="Total trees" type="number" value={form.totalTrees} onChange={(e) => set('totalTrees', Number(e.target.value))} />
           <Input label="Avg fruit / tree" type="number" value={form.averageFruitPerTree} onChange={(e) => set('averageFruitPerTree', Number(e.target.value))} />
           <Input label="Expected yield (kg)" type="number" value={form.expectedYield} onChange={(e) => set('expectedYield', Number(e.target.value))} />
+          
+          <Input 
+            label="Plantation Year" 
+            type="number" 
+            placeholder="e.g., 2018"
+            value={form.plantationYear} 
+            onChange={(e) => set('plantationYear', Number(e.target.value) || 2020)} 
+          />
+
           <div className="grid grid-cols-2 gap-3">
             <Input label="Total area" type="number" value={form.totalArea} onChange={(e) => set('totalArea', Number(e.target.value))} />
             <Select label="Unit" value={form.areaUnit} onChange={(e) => set('areaUnit', e.target.value)}>
