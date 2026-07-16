@@ -8,6 +8,12 @@ import type { FilterOptions, Orchard } from '@/types';
 import { titleCase } from '@/lib/format';
 import { cn } from '@/lib/cn';
 
+// Define a placeholder interface to safely handle the shape internally
+interface LocalOrchardImage {
+  url: string;
+  [key: string]: unknown;
+}
+
 const empty = {
   gardenName: '',
   description: '',
@@ -23,8 +29,14 @@ const empty = {
   price: 0,
   amenities: [] as string[],
   available: true,
+
   soilType: 'Loamy',
   soilDescription: '',
+
+
+  plantationYear: 2020,
+
+  images: [] as LocalOrchardImage[],
 };
 
 export default function OrchardForm() {
@@ -44,7 +56,6 @@ export default function OrchardForm() {
 
   useEffect(() => {
     if (!isEdit) return;
-    // load via mine list (simplest) then find — or fetch by id through update flow
     orchardService
       .listMine({ page: 1 })
       .then((res) => {
@@ -71,8 +82,14 @@ export default function OrchardForm() {
       price: o.price,
       amenities: o.amenities,
       available: o.available,
+
      soilType: (o as any).soilType || 'Loamy',
       soilDescription: (o as any).soilDescription || '',
+
+
+      plantationYear: (o as any).plantationYear || 2020,
+
+      images: (o.images as unknown as LocalOrchardImage[]) || [],
     });
 
   const set = (k: string, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
@@ -90,10 +107,10 @@ export default function OrchardForm() {
     setSaving(true);
     try {
       if (isEdit) {
-        await orchardService.update(id!, form);
+        await orchardService.update(id!, form as unknown as Partial<Orchard>);
         toast.success('Orchard updated');
       } else {
-        await orchardService.create({ ...form, status } as Partial<Orchard>);
+        await orchardService.create({ ...form, status } as unknown as Partial<Orchard>);
         toast.success(status === 'draft' ? 'Draft saved' : 'Submitted for review');
       }
       navigate('/seller/orchards');
@@ -121,6 +138,14 @@ export default function OrchardForm() {
         <Card className="space-y-4 p-6">
           <Input label="Garden name" value={form.gardenName} onChange={(e) => set('gardenName', e.target.value)} />
           <Textarea label="Description" value={form.description} onChange={(e) => set('description', e.target.value)} />
+          
+          <Input 
+            label="Orchard Image URL" 
+            placeholder="https://example.com/orchard-photo.jpg"
+            value={form.images[0]?.url || ''} 
+            onChange={(e) => set('images', e.target.value ? [{ url: e.target.value }] : [])} 
+          />
+
           <div className="grid gap-4 sm:grid-cols-2">
             <Input label="District" value={form.district} onChange={(e) => set('district', e.target.value)} />
             <Input label="State" value={form.state} onChange={(e) => set('state', e.target.value)} />
@@ -150,6 +175,15 @@ export default function OrchardForm() {
           <Input label="Total trees" type="number" value={form.totalTrees} onChange={(e) => set('totalTrees', Number(e.target.value))} />
           <Input label="Avg fruit / tree" type="number" value={form.averageFruitPerTree} onChange={(e) => set('averageFruitPerTree', Number(e.target.value))} />
           <Input label="Expected yield (kg)" type="number" value={form.expectedYield} onChange={(e) => set('expectedYield', Number(e.target.value))} />
+          
+          <Input 
+            label="Plantation Year" 
+            type="number" 
+            placeholder="e.g., 2018"
+            value={form.plantationYear} 
+            onChange={(e) => set('plantationYear', Number(e.target.value) || 2020)} 
+          />
+
           <div className="grid grid-cols-2 gap-3">
             <Input label="Total area" type="number" value={form.totalArea} onChange={(e) => set('totalArea', Number(e.target.value))} />
             <Select label="Unit" value={form.areaUnit} onChange={(e) => set('areaUnit', e.target.value)}>
