@@ -8,6 +8,12 @@ import type { FilterOptions, Orchard } from '@/types';
 import { titleCase } from '@/lib/format';
 import { cn } from '@/lib/cn';
 
+// Define a placeholder interface to safely handle the shape internally
+interface LocalOrchardImage {
+  url: string;
+  [key: string]: unknown;
+}
+
 const empty = {
   gardenName: '',
   description: '',
@@ -23,6 +29,7 @@ const empty = {
   price: 0,
   amenities: [] as string[],
   available: true,
+  images: [] as LocalOrchardImage[],
 };
 
 export default function OrchardForm() {
@@ -42,7 +49,6 @@ export default function OrchardForm() {
 
   useEffect(() => {
     if (!isEdit) return;
-    // load via mine list (simplest) then find — or fetch by id through update flow
     orchardService
       .listMine({ page: 1 })
       .then((res) => {
@@ -69,6 +75,7 @@ export default function OrchardForm() {
       price: o.price,
       amenities: o.amenities,
       available: o.available,
+      images: (o.images as unknown as LocalOrchardImage[]) || [],
     });
 
   const set = (k: string, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
@@ -86,10 +93,10 @@ export default function OrchardForm() {
     setSaving(true);
     try {
       if (isEdit) {
-        await orchardService.update(id!, form);
+        await orchardService.update(id!, form as unknown as Partial<Orchard>);
         toast.success('Orchard updated');
       } else {
-        await orchardService.create({ ...form, status } as Partial<Orchard>);
+        await orchardService.create({ ...form, status } as unknown as Partial<Orchard>);
         toast.success(status === 'draft' ? 'Draft saved' : 'Submitted for review');
       }
       navigate('/seller/orchards');
@@ -117,6 +124,14 @@ export default function OrchardForm() {
         <Card className="space-y-4 p-6">
           <Input label="Garden name" value={form.gardenName} onChange={(e) => set('gardenName', e.target.value)} />
           <Textarea label="Description" value={form.description} onChange={(e) => set('description', e.target.value)} />
+          
+          <Input 
+            label="Orchard Image URL" 
+            placeholder="https://example.com/orchard-photo.jpg"
+            value={form.images[0]?.url || ''} 
+            onChange={(e) => set('images', e.target.value ? [{ url: e.target.value }] : [])} 
+          />
+
           <div className="grid gap-4 sm:grid-cols-2">
             <Input label="District" value={form.district} onChange={(e) => set('district', e.target.value)} />
             <Input label="State" value={form.state} onChange={(e) => set('state', e.target.value)} />
