@@ -259,6 +259,23 @@ export default function OrchardDetailPage() {
             </p>
           </div>
 
+          {/* Water & Irrigation Systems Component Block */}
+          <h2 className="mb-3.5 font-serif text-[19px] font-semibold">Water &amp; Irrigation Systems</h2>
+          <div className="mb-7 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="rounded-xl border border-sand bg-cream p-3.5 text-center">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-faint mb-1">Method</div>
+              <div className="text-sm font-bold text-forest">{(orchard as any).irrigationMethod || 'Drip'}</div>
+            </div>
+            <div className="rounded-xl border border-sand bg-cream p-3.5 text-center">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-faint mb-1">Water Source</div>
+              <div className="text-sm font-bold text-ink">{(orchard as any).waterSource || 'Borewell'}</div>
+            </div>
+            <div className="rounded-xl border border-sand bg-cream p-3.5 text-center">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-faint mb-1">Frequency</div>
+              <div className="text-sm font-bold text-ink">{(orchard as any).irrigationFrequency || 'Weekly'}</div>
+            </div>
+          </div>
+
           {orchard.amenities.length > 0 && (
             <>
               <h2 className="mb-3.5 font-serif text-[19px] font-semibold">Amenities &amp; infrastructure</h2>

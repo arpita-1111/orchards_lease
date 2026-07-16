@@ -82,6 +82,10 @@ export default function OrchardForm() {
       price: o.price,
       amenities: o.amenities,
       available: o.available,
+      irrigationMethod: (o as any).irrigationMethod || 'Drip',
+      waterSource: (o as any).waterSource || 'Borewell',
+      irrigationFrequency: (o as any).irrigationFrequency || 'Weekly',
+
 
      soilType: (o as any).soilType || 'Loamy',
       soilDescription: (o as any).soilDescription || '',
