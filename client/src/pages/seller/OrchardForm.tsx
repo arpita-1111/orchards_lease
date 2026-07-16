@@ -23,6 +23,8 @@ const empty = {
   price: 0,
   amenities: [] as string[],
   available: true,
+  soilType: 'Loamy',
+  soilDescription: '',
 };
 
 export default function OrchardForm() {
@@ -69,6 +71,8 @@ export default function OrchardForm() {
       price: o.price,
       amenities: o.amenities,
       available: o.available,
+     soilType: (o as any).soilType || 'Loamy',
+      soilDescription: (o as any).soilDescription || '',
     });
 
   const set = (k: string, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
@@ -164,6 +168,33 @@ export default function OrchardForm() {
               </option>
             ))}
           </Select>
+        </Card>
+
+        {/* Step 3: Soil Composition Section */}
+        <Card className="p-6">
+          <p className="mb-3 text-sm font-semibold">Soil Composition &amp; Quality</p>
+          <div className="grid gap-4 sm:grid-cols-1">
+            <Select label="Primary Soil Type" value={form.soilType} onChange={(e) => set('soilType', e.target.value)}>
+              <option value="Loamy">Loamy Soil (Ideal Cultivation Blend)</option>
+              <option value="Clayey">Clayey Soil (High Nutrient Retention)</option>
+              <option value="Sandy">Sandy Soil (Rapid Drainage)</option>
+              <option value="Alluvial">Alluvial Soil (Highly Fertile Silt)</option>
+              <option value="Black">Black/Regur Soil (Excellent for Cotton &amp; Certain Fruits)</option>
+              <option value="Red">Red &amp; Yellow Soil (Iron-rich Drainage)</option>
+            </Select>
+
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-sub">
+                Custom Soil Description / pH Details
+              </label>
+              <textarea
+                value={form.soilDescription}
+                onChange={(e) => set('soilDescription', e.target.value)}
+                className="w-full h-20 rounded-xl border border-sand bg-cream px-4 py-2.5 text-sm text-ink outline-none focus:border-forest resize-none"
+                placeholder="Describe nutrient conditions, fertilizer history, organic matter, or approximate pH levels..."
+              />
+            </div>
+          </div>
         </Card>
 
         <div className="flex items-center justify-between">
