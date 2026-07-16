@@ -6,11 +6,11 @@ import {
   useCallback,
   type ReactNode,
 } from 'react';
-import axios from 'axios';
 import {
   setAccessToken,
   setSessionId,
   setAuthFailureHandler,
+  api, 
 } from '@/lib/apiClient';
 import { authService } from '@/services/auth.service';
 import type { User, Role } from '@/types';
@@ -33,7 +33,6 @@ interface AuthContextValue {
   updateUser: (patch: Partial<User>) => void;
 }
 
-const BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -50,16 +49,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthFailureHandler(handleAuthFailure);
   }, [handleAuthFailure]);
 
-  // Bootstrap: try to refresh the session on first load (cookie-based)
+  // Bootstrap: try to refresh the session on first load via the interceptor-configured apiClient
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await axios.post(
-          `${BASE_URL}/auth/refresh`,
-          {},
-          { withCredentials: true }
-        );
+        // Uses the built-in apiClient pipeline to preserve base configuration architectures cleanly
+        const { data } = await api.post('/auth/refresh');
         setAccessToken(data.data.accessToken);
+        if (data.data.sessionId) setSessionId(data.data.sessionId);
+        
         const me = await authService.me();
         setUser(me);
       } catch {

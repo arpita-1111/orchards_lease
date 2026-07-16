@@ -177,7 +177,7 @@ export function Navbar() {
                     </div>
                     {!isAdmin && (
                       <Link
-                        to="/profile"
+                        to={role === 'seller' ? '/seller/profile' : '/renter/profile'}
                         onClick={() => setMenuOpen(false)}
                         className="flex items-center gap-2.5 px-4 py-2.5 text-[13.5px] font-semibold text-ink hover:bg-[#f4f0e3]"
                       >
