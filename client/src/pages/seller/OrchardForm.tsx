@@ -23,6 +23,9 @@ const empty = {
   price: 0,
   amenities: [] as string[],
   available: true,
+  irrigationMethod: 'Drip',
+  waterSource: 'Borewell',
+  irrigationFrequency: 'Weekly',
 };
 
 export default function OrchardForm() {
@@ -69,6 +72,9 @@ export default function OrchardForm() {
       price: o.price,
       amenities: o.amenities,
       available: o.available,
+      irrigationMethod: (o as any).irrigationMethod || 'Drip',
+      waterSource: (o as any).waterSource || 'Borewell',
+      irrigationFrequency: (o as any).irrigationFrequency || 'Weekly',
     });
 
   const set = (k: string, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
@@ -164,6 +170,33 @@ export default function OrchardForm() {
               </option>
             ))}
           </Select>
+        </Card>
+
+      {/* Step 3: Irrigation & Water Management Section */}
+        <Card className="p-6">
+          <p className="mb-3 text-sm font-semibold">Irrigation &amp; Water Management</p>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Select label="Irrigation Method" value={form.irrigationMethod} onChange={(e) => set('irrigationMethod', e.target.value)}>
+              <option value="Drip">Drip Irrigation</option>
+              <option value="Sprinkler">Sprinkler System</option>
+              <option value="Flood">Flood/Surface</option>
+              <option value="Manual">Manual Watering</option>
+            </Select>
+
+            <Select label="Primary Water Source" value={form.waterSource} onChange={(e) => set('waterSource', e.target.value)}>
+              <option value="Borewell">Borewell / Tube Well</option>
+              <option value="Canal">River / Canal System</option>
+              <option value="Open Well">Open Well</option>
+              <option value="Rainfed">Rainwater Harvesting / Pond</option>
+            </Select>
+
+            <Select label="Watering Frequency" value={form.irrigationFrequency} onChange={(e) => set('irrigationFrequency', e.target.value)}>
+              <option value="Daily">Daily</option>
+              <option value="Alternative Days">Alternate Days</option>
+              <option value="Weekly">Weekly</option>
+              <option value="Bi-weekly">Twice a Month</option>
+            </Select>
+          </div>
         </Card>
 
         <div className="flex items-center justify-between">
