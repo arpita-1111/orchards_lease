@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar } from 'lucide-react';
+import { Calendar, FileDown } from 'lucide-react';
 import { bookingService } from '@/services/booking.service';
 import { EmptyState, Button, Badge, statusTone, Spinner } from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
@@ -16,6 +16,7 @@ export default function BookingsPage() {
   const { refreshBookingCount } = useMarketplace();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -39,6 +40,18 @@ export default function BookingsPage() {
     }
   };
 
+  const downloadAgreement = async (id: string) => {
+    setDownloadingId(id);
+    try {
+      await bookingService.downloadAgreement(id);
+      toast.success('Lease agreement downloaded');
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
   return (
     <main className="mx-auto max-w-[920px] px-6 pb-16 pt-7">
       <h1 className="mb-1.5 font-serif text-[28px] font-semibold">Your bookings</h1>
@@ -59,6 +72,7 @@ export default function BookingsPage() {
         <div className="flex flex-col gap-3.5">
           {bookings.map((b) => {
             const o = b.orchardId as Orchard;
+            const isDownloading = downloadingId === b._id;
             return (
               <div
                 key={b._id}
@@ -90,14 +104,31 @@ export default function BookingsPage() {
                   </div>
                   <div className="text-[11.5px] text-faint">Payment: {titleCase(b.paymentStatus)}</div>
                 </div>
-                {['requested', 'approved'].includes(b.bookingStatus) && (
-                  <button
-                    onClick={() => cancel(b._id)}
-                    className="flex-none rounded-[9px] bg-[#f3e7e1] px-3.5 py-2.5 text-[12.5px] font-semibold text-[#a05a45]"
-                  >
-                    Cancel
-                  </button>
-                )}
+                <div className="flex flex-none flex-wrap gap-2">
+                  {['approved', 'completed'].includes(b.bookingStatus) && (
+                    <button
+                      id={`download-agreement-${b._id}`}
+                      onClick={() => downloadAgreement(b._id)}
+                      disabled={isDownloading}
+                      className="flex items-center gap-1.5 rounded-[9px] bg-[#2a4e20] px-3.5 py-2.5 text-[12.5px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+                    >
+                      {isDownloading ? (
+                        <Spinner className="h-3.5 w-3.5 text-white" />
+                      ) : (
+                        <FileDown className="h-3.5 w-3.5" />
+                      )}
+                      {isDownloading ? 'Generating…' : 'Download Agreement'}
+                    </button>
+                  )}
+                  {['requested', 'approved'].includes(b.bookingStatus) && (
+                    <button
+                      onClick={() => cancel(b._id)}
+                      className="flex-none rounded-[9px] bg-[#f3e7e1] px-3.5 py-2.5 text-[12.5px] font-semibold text-[#a05a45]"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })}
