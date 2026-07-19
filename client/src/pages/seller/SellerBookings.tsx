@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, FileDown } from 'lucide-react';
 import { bookingService } from '@/services/booking.service';
 import { EmptyState, Badge, statusTone, Spinner } from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
@@ -21,6 +21,7 @@ export default function SellerBookings() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('all');
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -40,6 +41,18 @@ export default function SellerBookings() {
       load();
     } catch (err) {
       toast.error(getErrorMessage(err));
+    }
+  };
+
+  const downloadAgreement = async (id: string) => {
+    setDownloadingId(id);
+    try {
+      await bookingService.downloadAgreement(id);
+      toast.success('Lease agreement downloaded');
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setDownloadingId(null);
     }
   };
 
@@ -74,6 +87,7 @@ export default function SellerBookings() {
           {bookings.map((b) => {
             const renter = b.renterId as User;
             const o = b.orchardId as Orchard;
+            const isDownloading = downloadingId === b._id;
             return (
               <div key={b._id} className="flex flex-wrap items-center gap-3.5 rounded-[15px] border border-sand bg-cream px-[17px] py-[15px]">
                 <span className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-forest-light text-sm font-bold text-cream">
@@ -91,30 +105,47 @@ export default function SellerBookings() {
                   <Badge tone={statusTone[b.bookingStatus] || 'gray'}>{titleCase(b.bookingStatus)}</Badge>
                   <div className="mt-[7px] font-serif text-[17px] font-bold">{formatCurrency(b.totalAmount)}</div>
                 </div>
-                {b.bookingStatus === 'requested' && (
-                  <div className="flex flex-none gap-2">
+                <div className="flex flex-none flex-wrap gap-2">
+                  {b.bookingStatus === 'requested' && (
+                    <>
+                      <button
+                        onClick={() => act(() => bookingService.approve(b._id), 'Booking approved — renter notified')}
+                        className="rounded-[9px] bg-forest px-[15px] py-2.5 text-[12.5px] font-bold text-cream"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => act(() => bookingService.reject(b._id), 'Booking declined')}
+                        className="rounded-[9px] bg-[#f3e7e1] px-[15px] py-2.5 text-[12.5px] font-semibold text-[#a05a45]"
+                      >
+                        Decline
+                      </button>
+                    </>
+                  )}
+                  {b.bookingStatus === 'approved' && (
                     <button
-                      onClick={() => act(() => bookingService.approve(b._id), 'Booking approved — renter notified')}
-                      className="rounded-[9px] bg-forest px-[15px] py-2.5 text-[12.5px] font-bold text-cream"
+                      onClick={() => act(() => bookingService.complete(b._id), 'Marked complete')}
+                      className="rounded-[9px] border border-sand bg-white px-[15px] py-2.5 text-[12.5px] font-semibold text-ink"
                     >
-                      Approve
+                      Mark complete
                     </button>
+                  )}
+                  {['approved', 'completed'].includes(b.bookingStatus) && (
                     <button
-                      onClick={() => act(() => bookingService.reject(b._id), 'Booking declined')}
-                      className="rounded-[9px] bg-[#f3e7e1] px-[15px] py-2.5 text-[12.5px] font-semibold text-[#a05a45]"
+                      id={`seller-download-agreement-${b._id}`}
+                      onClick={() => downloadAgreement(b._id)}
+                      disabled={isDownloading}
+                      className="flex items-center gap-1.5 rounded-[9px] bg-[#2a4e20] px-[15px] py-2.5 text-[12.5px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
                     >
-                      Decline
+                      {isDownloading ? (
+                        <Spinner className="h-3.5 w-3.5 text-white" />
+                      ) : (
+                        <FileDown className="h-3.5 w-3.5" />
+                      )}
+                      {isDownloading ? 'Generating…' : 'Download Agreement'}
                     </button>
-                  </div>
-                )}
-                {b.bookingStatus === 'approved' && (
-                  <button
-                    onClick={() => act(() => bookingService.complete(b._id), 'Marked complete')}
-                    className="flex-none rounded-[9px] border border-sand bg-white px-[15px] py-2.5 text-[12.5px] font-semibold text-ink"
-                  >
-                    Mark complete
-                  </button>
-                )}
+                  )}
+                </div>
               </div>
             );
           })}
