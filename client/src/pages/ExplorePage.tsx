@@ -4,6 +4,7 @@ import { SlidersHorizontal } from 'lucide-react';
 import { orchardService, type OrchardFilters } from '@/services/orchard.service';
 import { wishlistService } from '@/services/wishlist.service';
 import { OrchardCard, OrchardCardSkeleton } from '@/components/orchard/OrchardCard';
+import { TopRatedSlider } from '@/components/orchard/TopRatedSlider';
 import { Button, EmptyState } from '@/components/ui';
 import { Pagination } from '@/components/ui/Pagination';
 import { useMarketplace } from '@/context/MarketplaceContext';
@@ -39,6 +40,10 @@ export default function ExplorePage() {
   const [loading, setLoading] = useState(true);
   const [mobileFilters, setMobileFilters] = useState(false);
 
+  // ── Top-rated slider (independent of current filters) ──
+  const [topRated, setTopRated] = useState<Orchard[]>([]);
+  const [topRatedLoading, setTopRatedLoading] = useState(true);
+
   const fruitList = (params.get('fruit') || '').split(',').filter(Boolean);
   const priceMax = Number(params.get('maxPrice') || 200000);
   const minTrees = Number(params.get('minTrees') || 0);
@@ -51,6 +56,16 @@ export default function ExplorePage() {
       wishlistService.getRecentlyViewed().then(setRecent).catch(() => {});
     }
   }, [user]);
+
+  // Fetch top-rated orchards once on mount (not tied to filter state)
+  useEffect(() => {
+    setTopRatedLoading(true);
+    orchardService
+      .list({ sort: 'rating', limit: 12, page: 1 } as OrchardFilters & { limit?: number })
+      .then((res) => setTopRated(res.data))
+      .catch(() => {})
+      .finally(() => setTopRatedLoading(false));
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -109,23 +124,38 @@ export default function ExplorePage() {
     );
 
   return (
-    <main className="container-page py-6">
-      {/* Hero */}
-      <div className="relative mb-6 overflow-hidden rounded-3xl px-9 py-9 text-[#f4f0e3]"
-        style={{ background: 'linear-gradient(120deg,#2f5d3a 0%,#3f6b34 60%,#5a7a2e 100%)' }}>
-        <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 88% 18%,rgba(255,255,255,.14),transparent 42%)' }} />
-        <p className="relative text-[12.5px] font-bold uppercase tracking-[.14em] opacity-80">
-          India's orchard leasing marketplace
-        </p>
-        <h1 className="relative my-2 max-w-[18ch] font-serif text-[clamp(26px,3.6vw,40px)] font-semibold leading-[1.08]">
-          Lease a fruiting orchard for the season ahead.
-        </h1>
-        <p className="relative max-w-[52ch] text-[15px] opacity-90">
-          Verified mango, litchi, pomegranate &amp; guava orchards with transparent yields,
-          availability calendars and seller-direct bookings.
-        </p>
+    <main>
+      {/* Hero — full-width inside container-page */}
+      <div className="container-page py-6">
+        <div className="relative mb-6 overflow-hidden rounded-3xl px-9 py-9 text-[#f4f0e3]"
+          style={{ background: 'linear-gradient(120deg,#2f5d3a 0%,#3f6b34 60%,#5a7a2e 100%)' }}>
+          <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 88% 18%,rgba(255,255,255,.14),transparent 42%)' }} />
+          <p className="relative text-[12.5px] font-bold uppercase tracking-[.14em] opacity-80">
+            India's orchard leasing marketplace
+          </p>
+          <h1 className="relative my-2 max-w-[18ch] font-serif text-[clamp(26px,3.6vw,40px)] font-semibold leading-[1.08]">
+            Lease a fruiting orchard for the season ahead.
+          </h1>
+          <p className="relative max-w-[52ch] text-[15px] opacity-90">
+            Verified mango, litchi, pomegranate &amp; guava orchards with transparent yields,
+            availability calendars and seller-direct bookings.
+          </p>
+        </div>
       </div>
 
+      {/* ── Top Rated Slider (full-width, own section) ── */}
+      <div className="border-y border-sand bg-paper/60">
+        <TopRatedSlider
+          orchards={topRated}
+          isLoading={topRatedLoading}
+          title="Top Rated Orchards"
+          subtitle="Community favourites — sorted by verified guest ratings."
+          maxItems={12}
+        />
+      </div>
+
+      {/* ── Filter + Results ── */}
+      <div className="container-page py-6">
       <div className="flex flex-wrap items-start gap-6">
         {/* Filters */}
         <aside
@@ -314,6 +344,7 @@ export default function ExplorePage() {
             </div>
           )}
         </section>
+      </div>
       </div>
     </main>
   );
