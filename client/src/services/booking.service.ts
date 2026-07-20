@@ -1,5 +1,6 @@
 import api from '@/lib/apiClient';
 import type { ApiResponse, Booking } from '@/types';
+import { generateLeaseAgreementPDF } from '@/lib/leaseAgreement';
 
 export const bookingService = {
   async list(params: { role?: 'renter' | 'seller'; status?: string; page?: number } = {}) {
@@ -35,5 +36,14 @@ export const bookingService = {
   async complete(id: string) {
     const { data } = await api.post<ApiResponse<Booking>>(`/bookings/${id}/complete`);
     return data.data;
+  },
+
+  /**
+   * Fetches the full booking (with all references populated) and triggers
+   * a client-side PDF download of the lease agreement.
+   */
+  async downloadAgreement(id: string): Promise<void> {
+    const booking = await this.get(id);
+    generateLeaseAgreementPDF(booking);
   },
 };
