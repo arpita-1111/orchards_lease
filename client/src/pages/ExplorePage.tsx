@@ -7,6 +7,7 @@ import { OrchardCard, OrchardCardSkeleton } from '@/components/orchard/OrchardCa
 import { TopRatedSlider } from '@/components/orchard/TopRatedSlider';
 import { Button, EmptyState } from '@/components/ui';
 import { Pagination } from '@/components/ui/Pagination';
+import { HeroSection } from '@/components/landing/HeroSection';
 import { useMarketplace } from '@/context/MarketplaceContext';
 import { useAuth } from '@/context/AuthContext';
 import { formatCurrency } from '@/lib/format';
