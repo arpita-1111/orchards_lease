@@ -6,6 +6,7 @@ import { wishlistService } from '@/services/wishlist.service';
 import { OrchardCard, OrchardCardSkeleton } from '@/components/orchard/OrchardCard';
 import { Button, EmptyState } from '@/components/ui';
 import { Pagination } from '@/components/ui/Pagination';
+import { HeroSection } from '@/components/landing/HeroSection';
 import { useMarketplace } from '@/context/MarketplaceContext';
 import { useAuth } from '@/context/AuthContext';
 import { formatCurrency } from '@/lib/format';
@@ -110,21 +111,7 @@ export default function ExplorePage() {
 
   return (
     <main className="container-page py-6">
-      {/* Hero */}
-      <div className="relative mb-6 overflow-hidden rounded-3xl px-9 py-9 text-[#f4f0e3]"
-        style={{ background: 'linear-gradient(120deg,#2f5d3a 0%,#3f6b34 60%,#5a7a2e 100%)' }}>
-        <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 88% 18%,rgba(255,255,255,.14),transparent 42%)' }} />
-        <p className="relative text-[12.5px] font-bold uppercase tracking-[.14em] opacity-80">
-          India's orchard leasing marketplace
-        </p>
-        <h1 className="relative my-2 max-w-[18ch] font-serif text-[clamp(26px,3.6vw,40px)] font-semibold leading-[1.08]">
-          Lease a fruiting orchard for the season ahead.
-        </h1>
-        <p className="relative max-w-[52ch] text-[15px] opacity-90">
-          Verified mango, litchi, pomegranate &amp; guava orchards with transparent yields,
-          availability calendars and seller-direct bookings.
-        </p>
-      </div>
+      <HeroSection className="mb-6" />
 
       <div className="flex flex-wrap items-start gap-6">
         {/* Filters */}
