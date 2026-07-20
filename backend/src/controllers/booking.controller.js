@@ -35,6 +35,20 @@ export const createBooking = asyncHandler(async (req, res) => {
     throw ApiError.badRequest('You cannot book your own orchard');
   }
 
+  const reqStart = new Date(startDate);
+  const reqEnd = new Date(endDate);
+
+  // Check against orchard's blocked dates
+  const isDateBlocked = (orchard.blockedDates || []).some((blocked) => {
+    const bStart = new Date(blocked.startDate);
+    const bEnd = new Date(blocked.endDate);
+    return reqStart < bEnd && reqEnd > bStart;
+  });
+
+  if (isDateBlocked) {
+    throw ApiError.badRequest('Selected dates fall within an owner-blocked period');
+  }
+
   // overlapping active booking guard
   const overlap = await Booking.findOne({
     orchardId,
@@ -135,6 +149,17 @@ export const approveBooking = asyncHandler(async (req, res) => {
   booking.bookingStatus = BOOKING_STATUS.APPROVED;
   booking.addTimeline(BOOKING_STATUS.APPROVED, 'Booking approved by seller', req.user._id);
   await booking.save();
+
+  // Auto-block the dates on the Orchard availability calendar
+  await Orchard.findByIdAndUpdate(booking.orchardId, {
+    $push: {
+      blockedDates: {
+        startDate: booking.startDate,
+        endDate: booking.endDate,
+        note: `Lease Approved (Booking ID: ${booking._id})`,
+      },
+    },
+  });
 
   await notify({
     user: booking.renterId,
