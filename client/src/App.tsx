@@ -25,6 +25,7 @@ import AdminUsers from '@/pages/admin/AdminUsers';
 import AdminModeration from '@/pages/admin/AdminModeration';
 import AdminAnalytics from '@/pages/admin/AdminAnalytics';
 import AdminSystem from '@/pages/admin/AdminSystem';
+import AddImageForm from '@/components/AddImageForm';
 
 export default function App() {
   return (
@@ -91,6 +92,7 @@ export default function App() {
           <Route path="orchards" element={<SellerOrchards />} />
           <Route path="orchards/new" element={<OrchardForm />} />
           <Route path="orchards/:id/edit" element={<OrchardForm />} />
+          <Route path="add-image" element={<AddImageForm />} />
           <Route path="bookings" element={<SellerBookings />} />
           
           {/* Seller Specific Profile Route (Resolves to /seller/profile) */}
