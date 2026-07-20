@@ -9,6 +9,8 @@ import notificationRoutes from './notification.routes.js';
 import sellerRoutes from './seller.routes.js';
 import adminRoutes from './admin.routes.js';
 import metaRoutes from './meta.routes.js';
+import imageRoutes from './image.routes.js';
+import availabilityRoutes from './availability.routes.js';
 
 const router = Router();
 
@@ -22,5 +24,6 @@ router.use('/notifications', notificationRoutes);
 router.use('/seller', sellerRoutes);
 router.use('/admin', adminRoutes);
 router.use('/meta', metaRoutes);
-
+router.use('/images', imageRoutes);
+router.use('/orchards', availabilityRoutes);
 export default router;

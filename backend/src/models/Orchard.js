@@ -23,6 +23,15 @@ const pricingRuleSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const dateRangeSchema = new mongoose.Schema(
+  {
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true },
+    note: { type: String, default: '' },
+  },
+  { _id: false }
+);
+
 const orchardSchema = new mongoose.Schema(
   {
     sellerId: {
@@ -62,6 +71,10 @@ const orchardSchema = new mongoose.Schema(
     thumbnail: { type: String, default: '' },
 
     amenities: { type: [String], default: [] },
+
+    // availability management (Issue #23)
+    availabilityDates: { type: [dateRangeSchema], default: [] },
+    blockedDates: { type: [dateRangeSchema], default: [] },
 
     // marketplace state
     available: { type: Boolean, default: true, index: true },

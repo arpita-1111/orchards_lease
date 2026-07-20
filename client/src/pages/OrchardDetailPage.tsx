@@ -29,6 +29,8 @@ import { orchardSurface } from '@/lib/gradients';
 import { getErrorMessage } from '@/lib/apiClient';
 import { cn } from '@/lib/cn';
 import type { Orchard, Review } from '@/types';
+import { OrchardCalendar } from '@/components/OrchardCalendar';
+<OrchardCalendar orchardId="{orchard._id}"/>
 
 export default function OrchardDetailPage() {
   const { slug = '' } = useParams();
