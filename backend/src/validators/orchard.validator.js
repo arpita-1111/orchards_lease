@@ -72,6 +72,10 @@ export const orchardQuerySchema = {
     fruit: z.string().optional(),
     state: z.string().optional(),
     district: z.string().optional(),
+    // Rent type filter: "season" | "month" | "year" | "harvest"
+    rentType: z.string().optional(),
+    // Comma-separated amenities: "irrigation,fencing,storage"
+    amenities: z.string().optional(),
     minPrice: z.coerce.number().optional(),
     maxPrice: z.coerce.number().optional(),
     minTrees: z.coerce.number().optional(),

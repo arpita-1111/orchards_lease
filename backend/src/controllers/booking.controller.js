@@ -94,13 +94,21 @@ export const listBookings = asyncHandler(async (req, res) => {
     delete filter.sellerId;
     filter.renterId = req.user._id;
   }
+
+  // Single status filter (existing behaviour)
   if (q.status) filter.bookingStatus = q.status;
+
+  // Multi-status filter for lease history (e.g. "completed,cancelled,rejected")
+  if (q.statuses && !q.status) {
+    const statusList = q.statuses.split(',').map((s) => s.trim()).filter(Boolean);
+    if (statusList.length) filter.bookingStatus = { $in: statusList };
+  }
 
   const [items, total] = await Promise.all([
     Booking.find(filter)
-      .populate('orchardId', 'gardenName slug thumbnail state district')
-      .populate('renterId', 'name avatar')
-      .populate('sellerId', 'name avatar')
+      .populate('orchardId', 'gardenName slug thumbnail state district fruitTypes price rentType totalArea areaUnit totalTrees expectedYield')
+      .populate('renterId', 'name avatar email phone')
+      .populate('sellerId', 'name avatar email phone')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
@@ -108,8 +116,24 @@ export const listBookings = asyncHandler(async (req, res) => {
     Booking.countDocuments(filter),
   ]);
 
-  return ok(res, items, 'Bookings', buildPageMeta({ page, limit, total }));
+  // Optional client-hint search: filter by orchard gardenName / location
+  // (client-side post-filter; move to $lookup pipeline for large datasets)
+  let results = items;
+  if (q.search) {
+    const re = new RegExp(q.search.trim(), 'i');
+    results = items.filter((b) => {
+      const o = b.orchardId;
+      return (
+        re.test(o?.gardenName || '') ||
+        re.test(o?.district   || '') ||
+        re.test(o?.state      || '')
+      );
+    });
+  }
+
+  return ok(res, results, 'Bookings', buildPageMeta({ page, limit, total }));
 });
+
 
 /* --------------------------- Get one ------------------------------- */
 export const getBooking = asyncHandler(async (req, res) => {

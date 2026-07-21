@@ -127,6 +127,9 @@ export function Navbar() {
               <NavLink to="/seller/bookings" className={navBtn}>
                 Bookings
               </NavLink>
+              <NavLink to="/seller/lease-history" className={navBtn}>
+                Lease History
+              </NavLink>
             </>
           )}
 
