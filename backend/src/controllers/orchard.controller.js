@@ -271,3 +271,22 @@ export const listMyOrchards = asyncHandler(async (req, res) => {
 
   return ok(res, items, 'My orchards', buildPageMeta({ page, limit, total }));
 });
+// Example creation/update handler
+const createOrchard = async (req, res) => {
+  const { isOrganicallyCertified, certificationExpiryDate } = req.body;
+  let certificationDocumentUrl = null;
+
+  if (req.file) {
+    certificationDocumentUrl = req.file.path; // or upload to Cloudinary/S3
+  }
+
+  const newOrchard = new Orchard({
+    ...req.body,
+    isOrganicallyCertified: isOrganicallyCertified === 'true' || isOrganicallyCertified === true,
+    certificationExpiryDate: isOrganicallyCertified ? certificationExpiryDate : null,
+    certificationDocumentUrl
+  });
+
+  await newOrchard.save();
+  res.status(201).json(newOrchard);
+};

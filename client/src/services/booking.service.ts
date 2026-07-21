@@ -1,11 +1,10 @@
-import api from '@/lib/apiClient';
+import apiClient from '@/lib/apiClient';
 import type { ApiResponse, Booking } from '@/types';
-import { generateLeaseAgreementPDF } from '@/lib/leaseAgreement';
 
 export const bookingService = {
-  async list(params: { role?: 'renter' | 'seller'; status?: string; page?: number } = {}) {
-    const { data } = await api.get<ApiResponse<Booking[]>>('/bookings', { params });
-    return data;
+  list: async (params?: { role?: string; status?: string; page?: number }) => {
+    const res = await apiClient.get<ApiResponse<Booking[]>>('/bookings', { params });
+    return res.data;
   },
 
   async history(params: {
@@ -28,37 +27,19 @@ export const bookingService = {
     return data.data;
   },
 
-  async create(body: { orchardId: string; startDate: string; endDate: string; message?: string }) {
-    const { data } = await api.post<ApiResponse<Booking>>('/bookings', body);
-    return data.data;
+  create: async (data: { orchardId: string; startDate: string; endDate: string; message?: string }) => {
+    const res = await apiClient.post<ApiResponse<Booking>>('/bookings', data);
+    return res.data.data;
   },
 
-  async approve(id: string) {
-    const { data } = await api.post<ApiResponse<Booking>>(`/bookings/${id}/approve`);
-    return data.data;
+  // Lease Renewal Request Method (Issue #27)
+  requestRenewal: async (bookingId: string, data: { newEndDate: string; message?: string }) => {
+    const res = await apiClient.post<ApiResponse<Booking>>(`/bookings/${bookingId}/renew`, data);
+    return res.data.data;
   },
 
-  async reject(id: string, reason?: string) {
-    const { data } = await api.post<ApiResponse<Booking>>(`/bookings/${id}/reject`, { reason });
-    return data.data;
-  },
-
-  async cancel(id: string, reason?: string) {
-    const { data } = await api.post<ApiResponse<Booking>>(`/bookings/${id}/cancel`, { reason });
-    return data.data;
-  },
-
-  async complete(id: string) {
-    const { data } = await api.post<ApiResponse<Booking>>(`/bookings/${id}/complete`);
-    return data.data;
-  },
-
-  /**
-   * Fetches the full booking (with all references populated) and triggers
-   * a client-side PDF download of the lease agreement.
-   */
-  async downloadAgreement(id: string): Promise<void> {
-    const booking = await this.get(id);
-    generateLeaseAgreementPDF(booking);
+  updateStatus: async (bookingId: string, action: 'approve' | 'reject' | 'cancel', reason?: string) => {
+    const res = await apiClient.patch<ApiResponse<Booking>>(`/bookings/${bookingId}/status`, { action, reason });
+    return res.data.data;
   },
 };
