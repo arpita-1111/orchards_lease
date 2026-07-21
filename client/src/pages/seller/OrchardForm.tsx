@@ -30,11 +30,25 @@ const empty = {
   amenities: [] as string[],
   available: true,
 
+  // Soil Quality
   soilType: 'Loamy',
   soilDescription: '',
 
-
   plantationYear: 2020,
+
+  // Water Sources & Irrigation (Issue #43)
+  waterPrimarySource: 'Borewell',
+  waterSecondarySource: 'None',
+  waterAvailableYearRound: true,
+  waterSourceDescription: '',
+  irrigationMethod: 'Drip',
+  irrigationFrequency: 'Weekly',
+
+  // Organic Certification (Issue #46)
+  isOrganicallyCertified: false,
+  certificationExpiryDate: '',
+  certificateNumber: '',
+  certificationDocumentUrl: '',
 
   images: [] as LocalOrchardImage[],
 };
@@ -82,16 +96,27 @@ export default function OrchardForm() {
       price: o.price,
       amenities: o.amenities,
       available: o.available,
-      irrigationMethod: (o as any).irrigationMethod || 'Drip',
-      waterSource: (o as any).waterSource || 'Borewell',
-      irrigationFrequency: (o as any).irrigationFrequency || 'Weekly',
 
-
-     soilType: (o as any).soilType || 'Loamy',
+      soilType: (o as any).soilType || 'Loamy',
       soilDescription: (o as any).soilDescription || '',
 
-
       plantationYear: (o as any).plantationYear || 2020,
+
+      // Water Sources Hydration (Issue #43)
+      waterPrimarySource: (o as any).waterSources?.primary || (o as any).waterSource || 'Borewell',
+      waterSecondarySource: (o as any).waterSources?.secondary || 'None',
+      waterAvailableYearRound: (o as any).waterSources?.availableYearRound ?? true,
+      waterSourceDescription: (o as any).waterSources?.description || '',
+      irrigationMethod: (o as any).irrigationMethod || 'Drip',
+      irrigationFrequency: (o as any).irrigationFrequency || 'Weekly',
+
+      // Organic Certification Hydration (Issue #46)
+      isOrganicallyCertified: (o as any).organicCertification?.isCertified || false,
+      certificationExpiryDate: (o as any).organicCertification?.expiryDate
+        ? new Date((o as any).organicCertification.expiryDate).toISOString().split('T')[0]
+        : '',
+      certificateNumber: (o as any).organicCertification?.certificateNumber || '',
+      certificationDocumentUrl: (o as any).organicCertification?.documentUrl || '',
 
       images: (o.images as unknown as LocalOrchardImage[]) || [],
     });
@@ -108,13 +133,40 @@ export default function OrchardForm() {
       toast.error('Please fill name, location, fruit and price');
       return;
     }
+
+    if (form.isOrganicallyCertified && (!form.certificationExpiryDate || !form.certificationDocumentUrl)) {
+      toast.error('Please provide expiry date and document URL for organic certification');
+      return;
+    }
+
     setSaving(true);
+
+    const payload = {
+      ...form,
+      // Water Sources Payload Structure (Issue #43)
+      waterSources: {
+        primary: form.waterPrimarySource,
+        secondary: form.waterSecondarySource,
+        availableYearRound: form.waterAvailableYearRound,
+        description: form.waterSourceDescription,
+      },
+      waterSource: form.waterPrimarySource,
+
+      // Organic Certification Payload Structure (Issue #46)
+      organicCertification: {
+        isCertified: form.isOrganicallyCertified,
+        expiryDate: form.isOrganicallyCertified && form.certificationExpiryDate ? form.certificationExpiryDate : null,
+        certificateNumber: form.isOrganicallyCertified ? form.certificateNumber : '',
+        documentUrl: form.isOrganicallyCertified ? form.certificationDocumentUrl : '',
+      },
+    };
+
     try {
       if (isEdit) {
-        await orchardService.update(id!, form as unknown as Partial<Orchard>);
+        await orchardService.update(id!, payload as unknown as Partial<Orchard>);
         toast.success('Orchard updated');
       } else {
-        await orchardService.create({ ...form, status } as unknown as Partial<Orchard>);
+        await orchardService.create({ ...payload, status } as unknown as Partial<Orchard>);
         toast.success(status === 'draft' ? 'Draft saved' : 'Submitted for review');
       }
       navigate('/seller/orchards');
@@ -208,7 +260,7 @@ export default function OrchardForm() {
           </Select>
         </Card>
 
-        {/* Step 3: Soil Composition Section */}
+        {/* Soil Composition Section */}
         <Card className="p-6">
           <p className="mb-3 text-sm font-semibold">Soil Composition &amp; Quality</p>
           <div className="grid gap-4 sm:grid-cols-1">
@@ -233,6 +285,122 @@ export default function OrchardForm() {
               />
             </div>
           </div>
+        </Card>
+
+        {/* Water Source & Irrigation Section (Issue #43) */}
+        <Card className="p-6 space-y-4">
+          <div>
+            <p className="text-sm font-semibold text-ink">Water Sources &amp; Irrigation Reliability</p>
+            <p className="text-xs text-faint">Specify how water is supplied to help renters evaluate year-round reliability.</p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Select label="Primary Water Source" value={form.waterPrimarySource} onChange={(e) => set('waterPrimarySource', e.target.value)}>
+              <option value="Borewell">Borewell</option>
+              <option value="Canal">Canal System</option>
+              <option value="River">River / Stream</option>
+              <option value="Well">Open Well</option>
+              <option value="Rainwater Harvesting">Rainwater Harvesting Reservoir</option>
+              <option value="Drip Connection">Municipal / Utility Drip Line</option>
+              <option value="Other">Other</option>
+            </Select>
+
+            <Select label="Secondary Water Source (Backup)" value={form.waterSecondarySource} onChange={(e) => set('waterSecondarySource', e.target.value)}>
+              <option value="None">None (Single Source)</option>
+              <option value="Borewell">Borewell</option>
+              <option value="Canal">Canal System</option>
+              <option value="River">River / Stream</option>
+              <option value="Well">Open Well</option>
+              <option value="Rainwater Harvesting">Rainwater Harvesting Reservoir</option>
+              <option value="Other">Other</option>
+            </Select>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Select label="Irrigation Method" value={form.irrigationMethod} onChange={(e) => set('irrigationMethod', e.target.value)}>
+              <option value="Drip">Drip Irrigation</option>
+              <option value="Sprinkler">Sprinkler System</option>
+              <option value="Flood">Flood / Channel Irrigation</option>
+              <option value="Manual">Manual Hose / Tanker</option>
+            </Select>
+
+            <Select label="Irrigation Frequency" value={form.irrigationFrequency} onChange={(e) => set('irrigationFrequency', e.target.value)}>
+              <option value="Daily">Daily</option>
+              <option value="Alternate Days">Alternate Days</option>
+              <option value="Weekly">Weekly</option>
+              <option value="Bi-weekly">Bi-weekly</option>
+              <option value="As Needed">Seasonal / As Needed</option>
+            </Select>
+          </div>
+
+          <div className="pt-1">
+            <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-ink">
+              <input
+                type="checkbox"
+                checked={form.waterAvailableYearRound}
+                onChange={(e) => set('waterAvailableYearRound', e.target.checked)}
+                className="h-4 w-4 rounded border-sand text-forest focus:ring-forest"
+              />
+              Water available throughout the year (12-month supply)
+            </label>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-sub">
+              Water Supply Notes / Seasonal Variation Details
+            </label>
+            <textarea
+              value={form.waterSourceDescription}
+              onChange={(e) => set('waterSourceDescription', e.target.value)}
+              className="w-full h-20 rounded-xl border border-sand bg-cream px-4 py-2.5 text-sm text-ink outline-none focus:border-forest resize-none"
+              placeholder="Mention water depth, pump horsepower, summer availability notes, or canal schedule..."
+            />
+          </div>
+        </Card>
+
+        {/* Organic Certification Section (Issue #46) */}
+        <Card className="space-y-4 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold">Organic Certification</p>
+              <p className="text-xs text-faint">Indicate whether this orchard holds a verified organic certificate.</p>
+            </div>
+            <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+              <input
+                type="checkbox"
+                checked={form.isOrganicallyCertified}
+                onChange={(e) => set('isOrganicallyCertified', e.target.checked)}
+                className="h-4 w-4 rounded border-sand text-forest focus:ring-forest"
+              />
+              Organically Certified
+            </label>
+          </div>
+
+          {form.isOrganicallyCertified && (
+            <div className="space-y-4 pt-2 border-t border-sand/50">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Input
+                  label="Certificate Number (Optional)"
+                  placeholder="e.g. ORG-2024-8892"
+                  value={form.certificateNumber}
+                  onChange={(e) => set('certificateNumber', e.target.value)}
+                />
+                <Input
+                  label="Certification Expiry Date"
+                  type="date"
+                  value={form.certificationExpiryDate}
+                  onChange={(e) => set('certificationExpiryDate', e.target.value)}
+                />
+              </div>
+
+              <Input
+                label="Certification Document URL"
+                placeholder="https://example.com/certificates/organic-cert.pdf"
+                value={form.certificationDocumentUrl}
+                onChange={(e) => set('certificationDocumentUrl', e.target.value)}
+              />
+            </div>
+          )}
         </Card>
 
         <div className="flex items-center justify-between">
