@@ -46,6 +46,20 @@ export type OrchardStatus =
   | 'rejected'
   | 'archived';
 
+export interface OrganicCertification {
+  isCertified: boolean;
+  expiryDate?: string | null;
+  documentUrl?: string;
+  certificateNumber?: string;
+}
+
+export interface WaterSourcesInfo {
+  primary: string;
+  secondary?: string;
+  availableYearRound: boolean;
+  description?: string;
+}
+
 export interface Orchard {
   _id: string;
   sellerId: string | Pick<User, '_id' | 'name' | 'avatar' | 'bio' | 'createdAt'>;
@@ -79,6 +93,14 @@ export interface Orchard {
   favouriteCount: number;
   ratingAverage: number;
   ratingCount: number;
+
+  waterSources?: WaterSourcesInfo;
+  waterSource?: string;
+  irrigationMethod?: string;
+  irrigationFrequency?: string;
+
+  organicCertification?: OrganicCertification;
+
   seo?: { metaTitle?: string; metaDescription?: string; keywords?: string[] };
   createdAt: string;
   updatedAt: string;
@@ -90,6 +112,13 @@ export type BookingStatus =
   | 'rejected'
   | 'cancelled'
   | 'completed';
+
+export interface RenewalEntry {
+  renewedAt: string;
+  previousEndDate: string;
+  newEndDate: string;
+  additionalAmount: number;
+}
 
 export interface Booking {
   _id: string;
@@ -104,6 +133,12 @@ export interface Booking {
   message?: string;
   rejectionReason?: string;
   cancellationReason?: string;
+
+  // Lease Renewal Properties (Issue #27)
+  isRenewal?: boolean;
+  previousBookingId?: string;
+  renewalHistory?: RenewalEntry[];
+
   timeline?: { status: string; note: string; at: string }[];
   createdAt: string;
 }

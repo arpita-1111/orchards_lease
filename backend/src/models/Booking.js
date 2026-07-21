@@ -1,11 +1,10 @@
 import mongoose from 'mongoose';
 import { BOOKING_STATUS, PAYMENT_STATUS } from '../utils/constants.js';
 
-const timelineEntrySchema = new mongoose.Schema(
+const timelineSchema = new mongoose.Schema(
   {
     status: { type: String, required: true },
     note: { type: String, default: '' },
-    by: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     at: { type: Date, default: Date.now },
   },
   { _id: false }
@@ -31,7 +30,6 @@ const bookingSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
-
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
 
@@ -44,35 +42,39 @@ const bookingSchema = new mongoose.Schema(
     paymentStatus: {
       type: String,
       enum: Object.values(PAYMENT_STATUS),
-      default: PAYMENT_STATUS.UNPAID,
-      index: true,
+      default: PAYMENT_STATUS.PENDING,
     },
 
     totalAmount: { type: Number, required: true, min: 0 },
-    message: { type: String, default: '', maxlength: 1000 }, // renter note
+    message: { type: String, default: '', maxlength: 1000 },
     rejectionReason: { type: String, default: '' },
     cancellationReason: { type: String, default: '' },
 
-    timeline: { type: [timelineEntrySchema], default: [] },
+    // Lease Renewal Management (Issue #27)
+    isRenewal: { type: Boolean, default: false },
+    previousBookingId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Booking',
+      default: null,
+    },
+    renewalHistory: [
+      {
+        renewedAt: { type: Date, default: Date.now },
+        previousEndDate: { type: Date },
+        newEndDate: { type: Date },
+        additionalAmount: { type: Number },
+      },
+    ],
+
+    timeline: { type: [timelineSchema], default: [] },
   },
   {
     timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
   }
 );
 
-bookingSchema.index({ sellerId: 1, bookingStatus: 1, createdAt: -1 });
-bookingSchema.index({ renterId: 1, createdAt: -1 });
-
-bookingSchema.virtual('durationDays').get(function durationDays() {
-  if (!this.startDate || !this.endDate) return 0;
-  return Math.max(1, Math.ceil((this.endDate - this.startDate) / (1000 * 60 * 60 * 24)));
-});
-
-bookingSchema.methods.addTimeline = function addTimeline(status, note, by) {
-  this.timeline.push({ status, note, by, at: new Date() });
-};
+bookingSchema.index({ sellerId: 1, bookingStatus: 1 });
+bookingSchema.index({ renterId: 1, bookingStatus: 1 });
 
 const Booking = mongoose.model('Booking', bookingSchema);
 export default Booking;
