@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal, Sprout } from 'lucide-react';
 import { orchardService, type OrchardFilters } from '@/services/orchard.service';
 import { wishlistService } from '@/services/wishlist.service';
 import { OrchardCard, OrchardCardSkeleton } from '@/components/orchard/OrchardCard';
@@ -50,6 +50,7 @@ export default function ExplorePage() {
   const minTrees = Number(params.get('minTrees') || 0);
   const rating = Number(params.get('rating') || 0);
   const availableOnly = params.get('available') === 'true';
+  const organicOnly = params.get('isOrganicallyCertified') === 'true';
 
   useEffect(() => {
     orchardService.getFilterOptions().then(setOptions).catch(() => {});
@@ -70,7 +71,7 @@ export default function ExplorePage() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const filters: OrchardFilters = {
+    const filters: OrchardFilters & { isOrganicallyCertified?: boolean } = {
       search: params.get('search') || undefined,
       fruit: params.get('fruit') || undefined,
       state: params.get('state') || undefined,
@@ -79,10 +80,11 @@ export default function ExplorePage() {
       minTrees: minTrees || undefined,
       rating: rating || undefined,
       available: availableOnly ? true : undefined,
+      isOrganicallyCertified: organicOnly ? true : undefined,
       page: params.get('page') ? Number(params.get('page')) : 1,
     };
     try {
-      const res = await orchardService.list(filters);
+      const res = await orchardService.list(filters as OrchardFilters);
       setOrchards(res.data);
       setMeta(res.meta || null);
     } finally {
@@ -112,6 +114,7 @@ export default function ExplorePage() {
     fruitList.length +
     (params.get('state') ? 1 : 0) +
     (availableOnly ? 1 : 0) +
+    (organicOnly ? 1 : 0) +
     (rating ? 1 : 0) +
     (priceMax < 200000 ? 1 : 0) +
     (minTrees > 0 ? 1 : 0);
@@ -244,15 +247,31 @@ export default function ExplorePage() {
             ))}
           </div>
 
-          <label className="flex cursor-pointer items-center gap-2.5 text-[13.5px] font-semibold">
-            <input
-              type="checkbox"
-              checked={availableOnly}
-              onChange={(e) => set('available', e.target.checked ? 'true' : '')}
-              className="h-[17px] w-[17px] cursor-pointer"
-            />
-            Available now only
-          </label>
+          <div className="space-y-3 pt-1">
+            <label className="flex cursor-pointer items-center gap-2.5 text-[13.5px] font-semibold">
+              <input
+                type="checkbox"
+                checked={availableOnly}
+                onChange={(e) => set('available', e.target.checked ? 'true' : '')}
+                className="h-[17px] w-[17px] cursor-pointer"
+              />
+              Available now only
+            </label>
+
+            {/* Issue #46 Filter Option */}
+            <label className="flex cursor-pointer items-center gap-2.5 text-[13.5px] font-semibold text-emerald-900">
+              <input
+                type="checkbox"
+                checked={organicOnly}
+                onChange={(e) => set('isOrganicallyCertified', e.target.checked ? 'true' : '')}
+                className="h-[17px] w-[17px] cursor-pointer accent-emerald-600"
+              />
+              <span className="flex items-center gap-1.5">
+                <Sprout className="h-4 w-4 text-emerald-600" />
+                Organically Certified 🌱
+              </span>
+            </label>
+          </div>
 
           {mobileFilters && (
             <Button className="mt-6 w-full" onClick={() => setMobileFilters(false)}>

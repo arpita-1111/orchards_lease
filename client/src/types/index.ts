@@ -38,6 +38,13 @@ export interface PricingRule {
   multiplier: number;
 }
 
+export interface OrganicCertification {
+  isCertified: boolean;
+  expiryDate?: string | null;
+  documentUrl?: string;
+  certificateNumber?: string;
+}
+
 export type OrchardStatus =
   | 'draft'
   | 'pending'
@@ -104,6 +111,7 @@ export interface Orchard {
   seo?: { metaTitle?: string; metaDescription?: string; keywords?: string[] };
   createdAt: string;
   updatedAt: string;
+  organicCertification?: OrganicCertification;
 }
 
 export type BookingStatus =
