@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal, Navigation, Loader2 } from 'lucide-react';
 import { orchardService, type OrchardFilters } from '@/services/orchard.service';
 import { wishlistService } from '@/services/wishlist.service';
 import { OrchardCard, OrchardCardSkeleton } from '@/components/orchard/OrchardCard';
@@ -10,6 +10,7 @@ import { Pagination } from '@/components/ui/Pagination';
 import { HeroSection } from '@/components/landing/HeroSection';
 import { useMarketplace } from '@/context/MarketplaceContext';
 import { useAuth } from '@/context/AuthContext';
+import { useLocation } from '@/context/LocationContext';
 import { formatCurrency } from '@/lib/format';
 import { orchardSurface } from '@/lib/gradients';
 import { cn } from '@/lib/cn';
@@ -17,6 +18,7 @@ import type { Orchard, FilterOptions, PageMeta } from '@/types';
 
 const SORTS = [
   { value: 'newest', label: 'Recommended' },
+  { value: 'distance', label: 'Nearest first 📍' },
   { value: 'price_asc', label: 'Price: low to high' },
   { value: 'price_desc', label: 'Price: high to low' },
   { value: 'rating', label: 'Top rated' },
@@ -33,6 +35,7 @@ export default function ExplorePage() {
   const [params, setParams] = useSearchParams();
   const { user } = useAuth();
   const { isSaved, isCompared, toggleSave, toggleCompare } = useMarketplace();
+  const { userLocation, getDistanceTo, requestLocation, status: locStatus } = useLocation();
 
   const [orchards, setOrchards] = useState<Orchard[]>([]);
   const [meta, setMeta] = useState<PageMeta | null>(null);
@@ -50,6 +53,7 @@ export default function ExplorePage() {
   const minTrees = Number(params.get('minTrees') || 0);
   const rating = Number(params.get('rating') || 0);
   const availableOnly = params.get('available') === 'true';
+  const maxDist = Number(params.get('maxDist') || 0);
 
   useEffect(() => {
     orchardService.getFilterOptions().then(setOptions).catch(() => {});
@@ -70,11 +74,12 @@ export default function ExplorePage() {
 
   const load = useCallback(async () => {
     setLoading(true);
+    const sortVal = params.get('sort') || 'newest';
     const filters: OrchardFilters = {
       search: params.get('search') || undefined,
       fruit: params.get('fruit') || undefined,
       state: params.get('state') || undefined,
-      sort: params.get('sort') || 'newest',
+      sort: sortVal === 'distance' ? 'newest' : sortVal,
       maxPrice: params.get('maxPrice') ? Number(params.get('maxPrice')) : undefined,
       minTrees: minTrees || undefined,
       rating: rating || undefined,
@@ -114,7 +119,23 @@ export default function ExplorePage() {
     (availableOnly ? 1 : 0) +
     (rating ? 1 : 0) +
     (priceMax < 200000 ? 1 : 0) +
-    (minTrees > 0 ? 1 : 0);
+    (minTrees > 0 ? 1 : 0) +
+    (maxDist > 0 ? 1 : 0);
+
+  const displayOrchards = orchards.slice().sort((a, b) => {
+    if (params.get('sort') === 'distance' && userLocation) {
+      const dA = getDistanceTo(a)?.straightKm ?? Infinity;
+      const dB = getDistanceTo(b)?.straightKm ?? Infinity;
+      return dA - dB;
+    }
+    return 0;
+  }).filter((o) => {
+    if (maxDist > 0 && userLocation) {
+      const d = getDistanceTo(o);
+      return d ? d.straightKm <= maxDist : true;
+    }
+    return true;
+  });
 
   const clearFilters = () => setParams(new URLSearchParams());
 
@@ -231,6 +252,43 @@ export default function ExplorePage() {
             className="mb-[22px] w-full"
           />
 
+          {/* Distance Filter Block */}
+          <div className="mb-5 rounded-xl border border-sand bg-[#f6f3ea] p-3">
+            <div className="mb-2 flex items-baseline justify-between">
+              <span className="eyebrow flex items-center gap-1">
+                <Navigation className="h-3 w-3 text-forest" /> Max distance
+              </span>
+              <span className="text-[12.5px] font-bold text-forest">
+                {maxDist > 0 ? `${maxDist} km` : 'Any distance'}
+              </span>
+            </div>
+            {userLocation ? (
+              <input
+                type="range"
+                min={0}
+                max={500}
+                step={25}
+                value={maxDist}
+                onChange={(e) => set('maxDist', Number(e.target.value) > 0 ? e.target.value : '')}
+                className="w-full"
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={requestLocation}
+                disabled={locStatus === 'locating'}
+                className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-lg border border-forest bg-avail py-1.5 text-xs font-bold text-forest hover:bg-forest hover:text-cream transition-colors"
+              >
+                {locStatus === 'locating' ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-forest" />
+                ) : (
+                  <Navigation className="h-3.5 w-3.5" />
+                )}
+                <span>{locStatus === 'locating' ? 'Locating…' : 'Enable GPS location'}</span>
+              </button>
+            )}
+          </div>
+
           <div className="eyebrow mb-2.5">Min rating</div>
           <div className="mb-5 flex gap-[7px]">
             {RATINGS.map((r) => (
@@ -265,7 +323,7 @@ export default function ExplorePage() {
         <section className="min-w-[300px] flex-[3_1_600px]">
           <div className="mb-[18px] flex flex-wrap items-center justify-between gap-3.5">
             <span className="text-sm text-sub">
-              <b className="text-base text-ink">{meta?.total ?? 0}</b> orchards available
+              <b className="text-base text-ink">{displayOrchards.length}</b> orchards available
             </span>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" className="lg:hidden" onClick={() => setMobileFilters(true)}>
@@ -294,16 +352,16 @@ export default function ExplorePage() {
                 <OrchardCardSkeleton key={i} />
               ))}
             </div>
-          ) : orchards.length === 0 ? (
+          ) : displayOrchards.length === 0 ? (
             <EmptyState
               title="No orchards match those filters"
-              description="Try widening your price range or clearing a filter."
+              description="Try widening your distance / price range or clearing a filter."
               action={<Button onClick={clearFilters}>Clear all filters</Button>}
             />
           ) : (
             <>
               <div className="grid grid-cols-[repeat(auto-fill,minmax(258px,1fr))] gap-5">
-                {orchards.map((o) => (
+                {displayOrchards.map((o) => (
                   <OrchardCard
                     key={o._id}
                     orchard={o}
