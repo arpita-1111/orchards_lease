@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { orchardService } from '@/services/orchard.service';
 import { Button, Input, Textarea, Select, Card, Badge } from '@/components/ui';
+import OrchardHistoryEditor from '@/components/orchard/OrchardHistoryEditor';
 import { useToast } from '@/context/ToastContext';
 import { getErrorMessage } from '@/lib/apiClient';
 import type { FilterOptions, Orchard } from '@/types';
@@ -37,6 +38,8 @@ const empty = {
   plantationYear: 2020,
 
   images: [] as LocalOrchardImage[],
+  pestHistory: [],
+  diseaseHistory: [],
 };
 
 export default function OrchardForm() {
@@ -94,6 +97,8 @@ export default function OrchardForm() {
       plantationYear: (o as any).plantationYear || 2020,
 
       images: (o.images as unknown as LocalOrchardImage[]) || [],
+      pestHistory: (o as any).pestHistory || [],
+      diseaseHistory: (o as any).diseaseHistory || [],
     });
 
   const set = (k: string, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
@@ -173,6 +178,13 @@ export default function OrchardForm() {
               </span>
             ))}
           </div>
+        </Card>
+
+        <Card className="p-6">
+          <p className="mb-3 text-sm font-semibold">Pest & Disease History</p>
+          <OrchardHistoryEditor value={(form as any).pestHistory} onChange={(v) => set('pestHistory', v)} title="Pest history" />
+          <div className="mt-4" />
+          <OrchardHistoryEditor value={(form as any).diseaseHistory} onChange={(v) => set('diseaseHistory', v)} title="Disease history" />
         </Card>
 
         <Card className="grid gap-4 p-6 sm:grid-cols-2">

@@ -32,6 +32,28 @@ const dateRangeSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const treatmentSchema = new mongoose.Schema(
+  {
+    date: { type: Date, required: true },
+    method: { type: String, default: '' },
+    chemicals: { type: [String], default: [] },
+    notes: { type: String, default: '' },
+  },
+  { _id: false }
+);
+
+const historyEntrySchema = new mongoose.Schema(
+  {
+    incidentDate: { type: Date, required: true },
+    season: { type: String, default: '' },
+    items: { type: [String], default: [] }, // pests or diseases
+    severity: { type: String, default: '' },
+    description: { type: String, default: '' },
+    treatments: { type: [treatmentSchema], default: [] },
+  },
+  { _id: false }
+);
+
 const orchardSchema = new mongoose.Schema(
   {
     sellerId: {
@@ -75,6 +97,9 @@ const orchardSchema = new mongoose.Schema(
     // availability management (Issue #23)
     availabilityDates: { type: [dateRangeSchema], default: [] },
     blockedDates: { type: [dateRangeSchema], default: [] },
+    // agricultural history
+    pestHistory: { type: [historyEntrySchema], default: [] },
+    diseaseHistory: { type: [historyEntrySchema], default: [] },
 
     // marketplace state
     available: { type: Boolean, default: true, index: true },

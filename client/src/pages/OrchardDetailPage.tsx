@@ -30,6 +30,7 @@ import { getErrorMessage } from '@/lib/apiClient';
 import { cn } from '@/lib/cn';
 import type { Orchard, Review } from '@/types';
 import { OrchardCalendar } from '@/components/OrchardCalendar';
+import OrchardHistoryEditor from '@/components/orchard/OrchardHistoryEditor';
 <OrchardCalendar orchardId="{orchard._id}"/>
 
 export default function OrchardDetailPage() {
@@ -276,6 +277,13 @@ export default function OrchardDetailPage() {
               <div className="text-[11px] font-bold uppercase tracking-wider text-faint mb-1">Frequency</div>
               <div className="text-sm font-bold text-ink">{(orchard as any).irrigationFrequency || 'Weekly'}</div>
             </div>
+          </div>
+
+          {/* Pest & Disease History (read-only) */}
+          <div className="mb-7">
+            <OrchardHistoryEditor value={(orchard as any).pestHistory} readOnly title="Pest history" />
+            <div className="mt-4" />
+            <OrchardHistoryEditor value={(orchard as any).diseaseHistory} readOnly title="Disease history" />
           </div>
 
           {orchard.amenities.length > 0 && (
