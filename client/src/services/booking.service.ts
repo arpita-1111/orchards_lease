@@ -7,9 +7,24 @@ export const bookingService = {
     return res.data;
   },
 
-  getById: async (id: string) => {
-    const res = await apiClient.get<ApiResponse<Booking>>(`/bookings/${id}`);
-    return res.data.data;
+  async history(params: {
+    role: 'renter' | 'seller';
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) {
+    const { data } = await api.get<ApiResponse<Booking[]>>('/bookings', {
+      params: {
+        ...params,
+        statuses: 'completed,cancelled,rejected',
+        limit: params.limit ?? 50,
+      },
+    });
+    return data;
+  },
+  async get(id: string) {
+    const { data } = await api.get<ApiResponse<Booking>>(`/bookings/${id}`);
+    return data.data;
   },
 
   create: async (data: { orchardId: string; startDate: string; endDate: string; message?: string }) => {
