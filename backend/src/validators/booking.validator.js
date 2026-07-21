@@ -32,6 +32,10 @@ export const bookingQuerySchema = {
     page: z.coerce.number().int().min(1).optional(),
     limit: z.coerce.number().int().min(1).max(100).optional(),
     status: z.string().optional(),
+    // Comma-separated list of statuses, e.g. "completed,cancelled,rejected" (for lease history)
+    statuses: z.string().optional(),
+    // Orchard name / location search term
+    search: z.string().max(200).optional(),
     role: z.enum(['renter', 'seller']).optional(),
   }),
 };

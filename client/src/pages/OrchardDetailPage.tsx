@@ -14,7 +14,10 @@ import {
   Warehouse,    // For Warehouses
   Fuel,         // For Petrol Pumps
   Activity,     // For Hospitals
-  ShoppingBag   // For Agricultural Stores
+  ShoppingBag,  // For Agricultural Stores
+  Sprout,       // For Organic Badge
+  FileText,     // For Certificate Document
+  ExternalLink  // For Document Link
 } from 'lucide-react';
 import { orchardService } from '@/services/orchard.service';
 import { bookingService } from '@/services/booking.service';
@@ -24,13 +27,12 @@ import { useMarketplace } from '@/context/MarketplaceContext';
 import { Button, EmptyState, Badge } from '@/components/ui';
 import { BookingModal } from '@/components/orchard/BookingModal';
 import { OrchardCard as OrchardMini } from '@/components/orchard/OrchardCard';
+import { OrchardMap } from '@/components/orchard/OrchardMap';
 import { formatCurrency, formatDate, titleCase } from '@/lib/format';
 import { orchardSurface } from '@/lib/gradients';
 import { getErrorMessage } from '@/lib/apiClient';
 import { cn } from '@/lib/cn';
 import type { Orchard, Review } from '@/types';
-import { OrchardCalendar } from '@/components/OrchardCalendar';
-<OrchardCalendar orchardId="{orchard._id}"/>
 
 export default function OrchardDetailPage() {
   const { slug = '' } = useParams();
@@ -46,7 +48,7 @@ export default function OrchardDetailPage() {
   const [bookingOpen, setBookingOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-// Crop season dictionary mapping layout rules
+  // Crop season dictionary mapping layout rules
   const cropSeasons: Record<string, string> = {
     apple: 'August - October (Autumn Peak)',
     mango: 'April - July (Summer Peak)',
@@ -119,6 +121,8 @@ export default function OrchardDetailPage() {
   const saved = isSaved(orchard._id);
   const plantationYear = (orchard as any).plantationYear || 2020;
   const calculatedAge = 2026 - plantationYear;
+  const organicCert = (orchard as any).organicCertification;
+  const waterInfo = (orchard as any).waterSources;
 
   const stats = [
     { k: 'Total trees', v: orchard.totalTrees.toLocaleString() },
@@ -151,10 +155,16 @@ export default function OrchardDetailPage() {
       {/* Header */}
       <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="mb-1.5 flex items-center gap-2.5">
+          <div className="mb-1.5 flex flex-wrap items-center gap-2.5">
             <Badge tone={orchard.available ? 'green' : 'gray'}>
               {orchard.available ? 'Available now' : 'Booked out'}
             </Badge>
+            {organicCert?.isCertified && (
+              <Badge tone="green" className="flex items-center gap-1 bg-emerald-100 text-emerald-800 border-emerald-300">
+                <Sprout className="h-3.5 w-3.5 text-emerald-600" />
+                Organically Certified
+              </Badge>
+            )}
             <span className="eyebrow">{orchard.fruitTypes[0]}</span>
           </div>
           <h1 className="font-serif text-[clamp(24px,3vw,33px)] font-semibold leading-[1.1]">
@@ -224,6 +234,52 @@ export default function OrchardDetailPage() {
         <div className="min-w-[300px] flex-[2_1_480px]">
           <p className="mb-6 max-w-[64ch] text-[15.5px] leading-[1.65] text-[#3a4632]">{orchard.description}</p>
 
+          {/* Organic Certification Highlight Section (Issue #46) */}
+          {organicCert?.isCertified && (
+            <div className="mb-7 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5 shadow-sm">
+              <div className="flex items-center justify-between gap-3 border-b border-emerald-200/60 pb-3 mb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm">
+                    <Sprout className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-serif text-[17px] font-bold text-emerald-950">Organic Certification Verified</h3>
+                    {organicCert.certificateNumber && (
+                      <p className="text-xs font-mono font-medium text-emerald-800">
+                        Cert No: {organicCert.certificateNumber}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <span className="rounded-full bg-emerald-200/70 px-3 py-1 text-xs font-bold text-emerald-900">
+                  Certified Organic
+                </span>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-emerald-900">
+                <div>
+                  <span className="text-emerald-700 font-medium">Valid Until: </span>
+                  <span className="font-semibold">
+                    {organicCert.expiryDate ? formatDate(organicCert.expiryDate) : 'Not specified'}
+                  </span>
+                </div>
+
+                {organicCert.documentUrl && (
+                  <a
+                    href={organicCert.documentUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-3.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-800"
+                  >
+                    <FileText className="h-3.5 w-3.5" />
+                    View Certificate Document
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
+
           <h2 className="mb-3.5 font-serif text-[19px] font-semibold">Orchard at a glance</h2>
           <div className="mb-7 grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-px overflow-hidden rounded-xl border border-sand bg-sand">
             {stats.map((st) => (
@@ -234,7 +290,7 @@ export default function OrchardDetailPage() {
             ))}
           </div>
 
-         <h2 className="mb-3.5 font-serif text-[19px] font-semibold">Crop Variety &amp; Seasonal Info</h2>
+          <h2 className="mb-3.5 font-serif text-[19px] font-semibold">Crop Variety &amp; Seasonal Info</h2>
           <div className="mb-7 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {orchard.fruitTypes.map((f) => (
               <div key={f} className="flex flex-col rounded-xl border border-sand bg-cream p-3.5">
@@ -247,6 +303,19 @@ export default function OrchardDetailPage() {
             ))}
           </div>
           
+          {/* Interactive Map Component Section (Issue #33) */}
+          <h2 className="mb-3.5 font-serif text-[19px] font-semibold">Interactive Location Map</h2>
+          <div className="mb-8">
+            <OrchardMap
+              latitude={orchard.latitude}
+              longitude={orchard.longitude}
+              gardenName={orchard.gardenName}
+              district={orchard.district}
+              state={orchard.state}
+              address={orchard.address}
+            />
+          </div>
+
           {/* Soil Composition Details Block */}
           <h2 className="mb-3.5 font-serif text-[19px] font-semibold">Soil &amp; Land Quality</h2>
           <div className="mb-7 rounded-xl border border-sand bg-cream p-4">
@@ -261,21 +330,52 @@ export default function OrchardDetailPage() {
             </p>
           </div>
 
-          {/* Water & Irrigation Systems Component Block */}
+          {/* Water & Irrigation Systems Component Block (Issue #43) */}
           <h2 className="mb-3.5 font-serif text-[19px] font-semibold">Water &amp; Irrigation Systems</h2>
-          <div className="mb-7 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <div className="rounded-xl border border-sand bg-cream p-3.5 text-center">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-faint mb-1">Method</div>
-              <div className="text-sm font-bold text-forest">{(orchard as any).irrigationMethod || 'Drip'}</div>
+          <div className="mb-7 rounded-xl border border-sand bg-cream p-5 space-y-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+              <div className="rounded-lg bg-chip/60 p-3 text-center">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-faint mb-1">Primary Source</div>
+                <div className="text-sm font-bold text-forest">
+                  {waterInfo?.primary || (orchard as any).waterSource || 'Borewell'}
+                </div>
+              </div>
+
+              <div className="rounded-lg bg-chip/60 p-3 text-center">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-faint mb-1">Secondary Source</div>
+                <div className="text-sm font-bold text-ink">
+                  {waterInfo?.secondary || 'None'}
+                </div>
+              </div>
+
+              <div className="rounded-lg bg-chip/60 p-3 text-center">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-faint mb-1">Method</div>
+                <div className="text-sm font-bold text-forest">{(orchard as any).irrigationMethod || 'Drip'}</div>
+              </div>
+
+              <div className="rounded-lg bg-chip/60 p-3 text-center">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-faint mb-1">Frequency</div>
+                <div className="text-sm font-bold text-ink">{(orchard as any).irrigationFrequency || 'Weekly'}</div>
+              </div>
             </div>
-            <div className="rounded-xl border border-sand bg-cream p-3.5 text-center">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-faint mb-1">Water Source</div>
-              <div className="text-sm font-bold text-ink">{(orchard as any).waterSource || 'Borewell'}</div>
+
+            <div className="flex items-center gap-2 pt-1 text-sm">
+              <span className={cn(
+                "inline-block h-2.5 w-2.5 rounded-full",
+                waterInfo?.availableYearRound ?? true ? "bg-emerald-500" : "bg-amber-500"
+              )} />
+              <span className="font-semibold text-ink">
+                {waterInfo?.availableYearRound ?? true
+                  ? "Year-Round Water Supply Available (12 Months)"
+                  : "Seasonal Water Supply / Restricted Summer Availability"}
+              </span>
             </div>
-            <div className="rounded-xl border border-sand bg-cream p-3.5 text-center">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-faint mb-1">Frequency</div>
-              <div className="text-sm font-bold text-ink">{(orchard as any).irrigationFrequency || 'Weekly'}</div>
-            </div>
+
+            {waterInfo?.description && (
+              <p className="text-xs leading-relaxed text-sub border-t border-sand/60 pt-3">
+                {waterInfo.description}
+              </p>
+            )}
           </div>
 
           {orchard.amenities.length > 0 && (

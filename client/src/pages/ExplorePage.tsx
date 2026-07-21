@@ -195,7 +195,7 @@ export default function ExplorePage() {
       page:      params.get('page') ? Number(params.get('page')) : 1,
     };
     try {
-      const res = await orchardService.list(filters);
+      const res = await orchardService.list(filters as OrchardFilters);
       setOrchards(res.data);
       setMeta(res.meta ?? null);
     } finally {
