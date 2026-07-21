@@ -17,13 +17,13 @@ const EDITABLE_FIELDS = [
 ];
 
 const SORT_MAP = {
-  newest: { createdAt: -1 },
-  oldest: { createdAt: 1 },
-  price_asc: { price: 1 },
+  newest:     { createdAt: -1 },
+  oldest:     { createdAt: 1 },
+  price_asc:  { price: 1 },
   price_desc: { price: -1 },
-  rating: { ratingAverage: -1 },
-  popular: { viewCount: -1 },
-  yield: { expectedYield: -1 },
+  rating:     { ratingAverage: -1 },
+  popular:    { viewCount: -1 },
+  yield:      { expectedYield: -1 },
 };
 
 /* ----------------------- Build public filter ----------------------- */
@@ -33,10 +33,19 @@ const buildPublicFilter = (q = {}) => {
   if (q.search) filter.$text = { $search: q.search };
   const fruits = toArray(q.fruit);
   if (fruits) filter.fruitTypes = { $in: fruits };
-  if (q.state) filter.state = new RegExp(`^${q.state}$`, 'i');
-  if (q.district) filter.district = new RegExp(`^${q.district}$`, 'i');
-  if (q.available !== undefined) filter.available = q.available;
-  if (q.featured !== undefined) filter.isFeatured = q.featured;
+  if (q.state)    filter.state    = new RegExp(`^${q.state}$`, 'i');
+  if (q.district) filter.district = new RegExp(q.district.trim(), 'i');
+  if (q.available !== undefined) filter.available  = q.available;
+  if (q.featured  !== undefined) filter.isFeatured = q.featured;
+
+  // Rent type: "season" | "month" | "year" | "harvest"
+  if (q.rentType) filter.rentType = q.rentType;
+
+  // Amenities: comma-separated — orchard must have ALL selected ($all)
+  if (q.amenities) {
+    const amenityList = q.amenities.split(',').map((a) => a.trim()).filter(Boolean);
+    if (amenityList.length) filter.amenities = { $all: amenityList };
+  }
 
   if (q.minPrice != null || q.maxPrice != null) {
     filter.price = {};
@@ -53,8 +62,8 @@ const buildPublicFilter = (q = {}) => {
     if (q.minArea != null) filter.totalArea.$gte = q.minArea;
     if (q.maxArea != null) filter.totalArea.$lte = q.maxArea;
   }
-  if (q.minYield != null) filter.expectedYield = { $gte: q.minYield };
-  if (q.rating != null) filter.ratingAverage = { $gte: q.rating };
+  if (q.minYield != null) filter.expectedYield  = { $gte: q.minYield };
+  if (q.rating   != null) filter.ratingAverage  = { $gte: q.rating };
 
   return filter;
 };
@@ -100,9 +109,7 @@ export const getOrchardBySlug = asyncHandler(async (req, res) => {
     if (req.user && req.user.role === ROLES.RENTER) {
       await Wishlist.findOneAndUpdate(
         { user: req.user._id },
-        {
-          $pull: { recentlyViewed: { orchard: orchard._id } },
-        },
+        { $pull: { recentlyViewed: { orchard: orchard._id } } },
         { upsert: true }
       );
       await Wishlist.updateOne(
