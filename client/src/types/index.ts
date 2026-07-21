@@ -195,4 +195,9 @@ export interface FilterOptions {
   rentTypes: string[];
   areaUnits: string[];
   states: string[];
+  // Live facets — only values actually present in published orchards
+  availableRentTypes: string[];
+  availableAmenities: string[];
+  priceRange: { min: number; max: number };
+  treeRange:  { min: number; max: number };
 }
