@@ -30,11 +30,22 @@ const empty = {
   amenities: [] as string[],
   available: true,
 
+  // Water & Irrigation
+  irrigationMethod: 'Drip',
+  waterSource: 'Borewell',
+  irrigationFrequency: 'Weekly',
+
+  // Soil Quality
   soilType: 'Loamy',
   soilDescription: '',
 
-
   plantationYear: 2020,
+
+  // Organic Certification (Issue #46)
+  isOrganicallyCertified: false,
+  certificationExpiryDate: '',
+  certificateNumber: '',
+  certificationDocumentUrl: '',
 
   images: [] as LocalOrchardImage[],
 };
@@ -86,12 +97,18 @@ export default function OrchardForm() {
       waterSource: (o as any).waterSource || 'Borewell',
       irrigationFrequency: (o as any).irrigationFrequency || 'Weekly',
 
-
-     soilType: (o as any).soilType || 'Loamy',
+      soilType: (o as any).soilType || 'Loamy',
       soilDescription: (o as any).soilDescription || '',
 
-
       plantationYear: (o as any).plantationYear || 2020,
+
+      // Organic Certification Hydration
+      isOrganicallyCertified: (o as any).organicCertification?.isCertified || false,
+      certificationExpiryDate: (o as any).organicCertification?.expiryDate
+        ? new Date((o as any).organicCertification.expiryDate).toISOString().split('T')[0]
+        : '',
+      certificateNumber: (o as any).organicCertification?.certificateNumber || '',
+      certificationDocumentUrl: (o as any).organicCertification?.documentUrl || '',
 
       images: (o.images as unknown as LocalOrchardImage[]) || [],
     });
@@ -108,13 +125,30 @@ export default function OrchardForm() {
       toast.error('Please fill name, location, fruit and price');
       return;
     }
+
+    if (form.isOrganicallyCertified && (!form.certificationExpiryDate || !form.certificationDocumentUrl)) {
+      toast.error('Please provide expiry date and document URL for organic certification');
+      return;
+    }
+
     setSaving(true);
+
+    const payload = {
+      ...form,
+      organicCertification: {
+        isCertified: form.isOrganicallyCertified,
+        expiryDate: form.isOrganicallyCertified && form.certificationExpiryDate ? form.certificationExpiryDate : null,
+        certificateNumber: form.isOrganicallyCertified ? form.certificateNumber : '',
+        documentUrl: form.isOrganicallyCertified ? form.certificationDocumentUrl : '',
+      },
+    };
+
     try {
       if (isEdit) {
-        await orchardService.update(id!, form as unknown as Partial<Orchard>);
+        await orchardService.update(id!, payload as unknown as Partial<Orchard>);
         toast.success('Orchard updated');
       } else {
-        await orchardService.create({ ...form, status } as unknown as Partial<Orchard>);
+        await orchardService.create({ ...payload, status } as unknown as Partial<Orchard>);
         toast.success(status === 'draft' ? 'Draft saved' : 'Submitted for review');
       }
       navigate('/seller/orchards');
@@ -208,7 +242,7 @@ export default function OrchardForm() {
           </Select>
         </Card>
 
-        {/* Step 3: Soil Composition Section */}
+        {/* Soil Composition Section */}
         <Card className="p-6">
           <p className="mb-3 text-sm font-semibold">Soil Composition &amp; Quality</p>
           <div className="grid gap-4 sm:grid-cols-1">
@@ -233,6 +267,51 @@ export default function OrchardForm() {
               />
             </div>
           </div>
+        </Card>
+
+        {/* Organic Certification Section (Issue #46) */}
+        <Card className="space-y-4 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold">Organic Certification</p>
+              <p className="text-xs text-faint">Indicate whether this orchard holds a verified organic certificate.</p>
+            </div>
+            <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+              <input
+                type="checkbox"
+                checked={form.isOrganicallyCertified}
+                onChange={(e) => set('isOrganicallyCertified', e.target.checked)}
+                className="h-4 w-4 rounded border-sand text-forest focus:ring-forest"
+              />
+              Organically Certified
+            </label>
+          </div>
+
+          {form.isOrganicallyCertified && (
+            <div className="space-y-4 pt-2 border-t border-sand/50">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Input
+                  label="Certificate Number (Optional)"
+                  placeholder="e.g. ORG-2024-8892"
+                  value={form.certificateNumber}
+                  onChange={(e) => set('certificateNumber', e.target.value)}
+                />
+                <Input
+                  label="Certification Expiry Date"
+                  type="date"
+                  value={form.certificationExpiryDate}
+                  onChange={(e) => set('certificationExpiryDate', e.target.value)}
+                />
+              </div>
+
+              <Input
+                label="Certification Document URL"
+                placeholder="https://example.com/certificates/organic-cert.pdf"
+                value={form.certificationDocumentUrl}
+                onChange={(e) => set('certificationDocumentUrl', e.target.value)}
+              />
+            </div>
+          )}
         </Card>
 
         <div className="flex items-center justify-between">

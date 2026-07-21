@@ -61,6 +61,14 @@ const orchardSchema = new mongoose.Schema(
     totalArea: { type: Number, default: 0, min: 0 },
     areaUnit: { type: String, enum: Object.values(AREA_UNIT), default: AREA_UNIT.ACRE },
 
+    // organic certification (Issue #46)
+    organicCertification: {
+      isCertified: { type: Boolean, default: false, index: true },
+      expiryDate: { type: Date, default: null },
+      documentUrl: { type: String, default: '' },
+      certificateNumber: { type: String, default: '', trim: true }, // Optional field for added credibility
+    },
+
     // pricing
     rentType: { type: String, enum: Object.values(RENT_TYPE), default: RENT_TYPE.SEASON },
     price: { type: Number, required: true, min: 0, index: true },
