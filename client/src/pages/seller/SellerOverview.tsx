@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { sellerService, type SellerOverview as Overview, type RevenuePoint } from '@/services/seller.service';
 import { bookingService } from '@/services/booking.service';
+import { orchardService } from '@/services/orchard.service';
+import { weatherService } from '@/services/weather.service';
+import { WeatherIcon } from '@/components/orchard/WeatherCard';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { Skeleton } from '@/components/ui';
@@ -19,6 +22,10 @@ export default function SellerOverview() {
   const [revenue, setRevenue] = useState<RevenuePoint[]>([]);
   const [queue, setQueue] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [myOrchards, setMyOrchards] = useState<Orchard[]>([]);
+  const [selectedOrchardId, setSelectedOrchardId] = useState<string>('');
+  const [weather, setWeather] = useState<any>(null);
+  const [weatherLoading, setWeatherLoading] = useState(false);
 
   const loadQueue = () =>
     bookingService
@@ -35,7 +42,25 @@ export default function SellerOverview() {
       .catch(() => {})
       .finally(() => setLoading(false));
     loadQueue();
+
+    orchardService.listMine()
+      .then((res) => {
+        setMyOrchards(res.data);
+        if (res.data.length > 0) {
+          setSelectedOrchardId(res.data[0]._id);
+        }
+      })
+      .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!selectedOrchardId) return;
+    setWeatherLoading(true);
+    weatherService.getWeather(selectedOrchardId)
+      .then((data) => setWeather(data))
+      .catch(() => setWeather(null))
+      .finally(() => setWeatherLoading(false));
+  }, [selectedOrchardId]);
 
   const approve = async (id: string) => {
     try {
@@ -111,45 +136,118 @@ export default function SellerOverview() {
           )}
         </div>
 
-        {/* Approval queue */}
-        <div className="min-w-[280px] flex-1 basis-[280px] rounded-[18px] border border-sand bg-cream p-[22px]">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-serif text-[18px] font-semibold">Approval queue</h2>
-            <span className="rounded-full bg-[#fbf2dd] px-2.5 py-[3px] text-xs font-bold text-[#a9772b]">
-              {queue.length} pending
-            </span>
-          </div>
-          {queue.length === 0 ? (
-            <p className="py-3.5 text-center text-[13px] text-faint">All caught up 🌿</p>
-          ) : (
-            queue.slice(0, 4).map((b) => {
-              const renter = b.renterId as User;
-              const o = b.orchardId as Orchard;
-              return (
-                <div key={b._id} className="flex items-center gap-2.5 border-t border-chip py-[11px]">
-                  <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-forest-light text-xs font-bold text-cream">
-                    {initialsOf(renter?.name)}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-[13.5px] font-bold">{renter?.name}</div>
-                    <div className="truncate text-[11.5px] text-faint">{o?.gardenName}</div>
+        {/* Approval queue & Weather Widget Stack */}
+        <div className="flex-1 basis-[280px] flex flex-col gap-5">
+          {/* Approval queue */}
+          <div className="rounded-[18px] border border-sand bg-cream p-[22px]">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="font-serif text-[18px] font-semibold">Approval queue</h2>
+              <span className="rounded-full bg-[#fbf2dd] px-2.5 py-[3px] text-xs font-bold text-[#a9772b]">
+                {queue.length} pending
+              </span>
+            </div>
+            {queue.length === 0 ? (
+              <p className="py-3.5 text-center text-[13px] text-faint">All caught up 🌿</p>
+            ) : (
+              queue.slice(0, 4).map((b) => {
+                const renter = b.renterId as User;
+                const o = b.orchardId as Orchard;
+                return (
+                  <div key={b._id} className="flex items-center gap-2.5 border-t border-chip py-[11px]">
+                    <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-forest-light text-xs font-bold text-cream">
+                      {initialsOf(renter?.name)}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[13.5px] font-bold">{renter?.name}</div>
+                      <div className="truncate text-[11.5px] text-faint">{o?.gardenName}</div>
+                    </div>
+                    <button
+                      onClick={() => approve(b._id)}
+                      className="flex-none rounded-[9px] bg-forest px-2.5 py-[7px] text-xs font-bold text-cream"
+                    >
+                      Approve
+                    </button>
                   </div>
-                  <button
-                    onClick={() => approve(b._id)}
-                    className="flex-none rounded-[9px] bg-forest px-2.5 py-[7px] text-xs font-bold text-cream"
-                  >
-                    Approve
-                  </button>
+                );
+              })
+            )}
+            <button
+              onClick={() => navigate('/seller/bookings')}
+              className="mt-3 w-full rounded-[10px] bg-avail py-2.5 text-[13px] font-bold text-forest"
+            >
+              View all bookings
+            </button>
+          </div>
+
+          {/* Weather Widget */}
+          <div className="rounded-[18px] border border-sand bg-cream p-[22px] flex flex-col justify-between">
+            <div>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="font-serif text-[18px] font-semibold">Orchard Weather</h2>
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-forest/10 text-forest text-xs font-semibold">
+                  ☁️
+                </span>
+              </div>
+              
+              {myOrchards.length === 0 ? (
+                <p className="py-3 text-center text-xs text-faint">No orchards listed yet 🌳</p>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-[10px] font-bold text-faint uppercase tracking-wider block mb-1">Select Listing</label>
+                    <select
+                      value={selectedOrchardId}
+                      onChange={(e) => setSelectedOrchardId(e.target.value)}
+                      className="w-full rounded-xl border border-sand bg-cream px-3 py-2 text-xs font-semibold text-ink focus:outline-none focus:ring-1 focus:ring-forest"
+                    >
+                      {myOrchards.map((o) => (
+                        <option key={o._id} value={o._id}>
+                          {o.gardenName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {weatherLoading ? (
+                    <div className="flex justify-center py-6">
+                      <span className="text-xs text-faint font-semibold animate-pulse">Loading conditions...</span>
+                    </div>
+                  ) : weather ? (
+                    <div className="rounded-xl border border-sand/40 bg-white/40 p-3 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-chip text-forest">
+                          <WeatherIcon iconName={weather.current.icon} className="h-6 w-6" />
+                        </div>
+                        <div>
+                          <div className="text-[20px] font-bold font-serif text-ink">{weather.current.temperature}°C</div>
+                          <div className="text-xs font-bold text-sub">{weather.current.condition}</div>
+                        </div>
+                      </div>
+                      <div className="text-right text-[11px] font-semibold text-faint space-y-0.5 animate-fadeIn">
+                        <div>Feels like {weather.current.feelsLike}°C</div>
+                        <div>Wind: {weather.current.windSpeed} km/h</div>
+                        <div>Rain: {weather.current.rainChance}%</div>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="py-3 text-center text-xs text-terra font-bold">Failed to load weather</p>
+                  )}
                 </div>
-              );
-            })
-          )}
-          <button
-            onClick={() => navigate('/seller/bookings')}
-            className="mt-3 w-full rounded-[10px] bg-avail py-2.5 text-[13px] font-bold text-forest"
-          >
-            View all bookings
-          </button>
+              )}
+            </div>
+            
+            {selectedOrchardId && (
+              <button
+                onClick={() => {
+                  const target = myOrchards.find((o) => o._id === selectedOrchardId);
+                  if (target) navigate(`/orchards/${target.slug}`);
+                }}
+                className="mt-4 w-full rounded-[10px] bg-avail py-2 text-[12.5px] font-bold text-forest hover:bg-[#d8edd6] transition-colors"
+              >
+                View Full 7-Day Forecast
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </main>

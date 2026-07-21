@@ -201,3 +201,31 @@ export interface FilterOptions {
   priceRange: { min: number; max: number };
   treeRange:  { min: number; max: number };
 }
+
+export interface WeatherCurrent {
+  temperature: number;
+  feelsLike: number;
+  humidity: number;
+  windSpeed: number;
+  rainChance: number;
+  condition: string;
+  icon: string;
+  sunrise: string;
+  sunset: string;
+}
+
+export interface WeatherForecastDay {
+  date: string;
+  tempMax: number;
+  tempMin: number;
+  condition: string;
+  icon: string;
+  rainChance: number;
+}
+
+export interface WeatherData {
+  current: WeatherCurrent;
+  forecast: WeatherForecastDay[];
+  alerts: string[];
+}
+
