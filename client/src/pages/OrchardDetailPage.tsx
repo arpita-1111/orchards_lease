@@ -17,8 +17,7 @@ import {
   ShoppingBag,  // For Agricultural Stores
   Sprout,       // For Organic Badge
   FileText,     // For Certificate Document
-  ExternalLink, // For Document Link
-  Droplets      // For Water Icon
+  ExternalLink  // For Document Link
 } from 'lucide-react';
 import { orchardService } from '@/services/orchard.service';
 import { bookingService } from '@/services/booking.service';
@@ -28,6 +27,7 @@ import { useMarketplace } from '@/context/MarketplaceContext';
 import { Button, EmptyState, Badge } from '@/components/ui';
 import { BookingModal } from '@/components/orchard/BookingModal';
 import { OrchardCard as OrchardMini } from '@/components/orchard/OrchardCard';
+import { OrchardMap } from '@/components/orchard/OrchardMap';
 import { formatCurrency, formatDate, titleCase } from '@/lib/format';
 import { orchardSurface } from '@/lib/gradients';
 import { getErrorMessage } from '@/lib/apiClient';
@@ -303,6 +303,19 @@ export default function OrchardDetailPage() {
             ))}
           </div>
           
+          {/* Interactive Map Component Section (Issue #33) */}
+          <h2 className="mb-3.5 font-serif text-[19px] font-semibold">Interactive Location Map</h2>
+          <div className="mb-8">
+            <OrchardMap
+              latitude={orchard.latitude}
+              longitude={orchard.longitude}
+              gardenName={orchard.gardenName}
+              district={orchard.district}
+              state={orchard.state}
+              address={orchard.address}
+            />
+          </div>
+
           {/* Soil Composition Details Block */}
           <h2 className="mb-3.5 font-serif text-[19px] font-semibold">Soil &amp; Land Quality</h2>
           <div className="mb-7 rounded-xl border border-sand bg-cream p-4">

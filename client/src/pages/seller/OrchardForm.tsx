@@ -19,6 +19,10 @@ const empty = {
   description: '',
   district: '',
   state: '',
+  address: '',
+  latitude: 20.5937,
+  longitude: 78.9629,
+
   fruitTypes: [] as string[],
   totalTrees: 0,
   averageFruitPerTree: 0,
@@ -86,6 +90,10 @@ export default function OrchardForm() {
       description: o.description || '',
       district: o.district,
       state: o.state,
+      address: o.address || '',
+      latitude: o.latitude || 20.5937,
+      longitude: o.longitude || 78.9629,
+
       fruitTypes: o.fruitTypes,
       totalTrees: o.totalTrees,
       averageFruitPerTree: o.averageFruitPerTree,
@@ -143,6 +151,9 @@ export default function OrchardForm() {
 
     const payload = {
       ...form,
+      latitude: Number(form.latitude),
+      longitude: Number(form.longitude),
+
       // Water Sources Payload Structure (Issue #43)
       waterSources: {
         primary: form.waterPrimarySource,
@@ -205,6 +216,33 @@ export default function OrchardForm() {
           <div className="grid gap-4 sm:grid-cols-2">
             <Input label="District" value={form.district} onChange={(e) => set('district', e.target.value)} />
             <Input label="State" value={form.state} onChange={(e) => set('state', e.target.value)} />
+          </div>
+
+          <Input 
+            label="Full Address / Landmark" 
+            placeholder="e.g. Near Village Gate, Highway 44, District" 
+            value={form.address} 
+            onChange={(e) => set('address', e.target.value)} 
+          />
+
+          {/* Map Coordinates Block (Issue #33) */}
+          <div className="grid gap-4 sm:grid-cols-2 pt-2 border-t border-sand/60">
+            <Input 
+              label="Latitude (°N)" 
+              type="number" 
+              step="any"
+              placeholder="e.g. 26.8467" 
+              value={form.latitude} 
+              onChange={(e) => set('latitude', parseFloat(e.target.value) || 0)} 
+            />
+            <Input 
+              label="Longitude (°E)" 
+              type="number" 
+              step="any"
+              placeholder="e.g. 80.9462" 
+              value={form.longitude} 
+              onChange={(e) => set('longitude', parseFloat(e.target.value) || 0)} 
+            />
           </div>
         </Card>
 
