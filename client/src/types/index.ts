@@ -38,6 +38,13 @@ export interface PricingRule {
   multiplier: number;
 }
 
+export interface OrganicCertification {
+  isCertified: boolean;
+  expiryDate?: string | null;
+  documentUrl?: string;
+  certificateNumber?: string;
+}
+
 export type OrchardStatus =
   | 'draft'
   | 'pending'
@@ -45,6 +52,22 @@ export type OrchardStatus =
   | 'unpublished'
   | 'rejected'
   | 'archived';
+
+// Organic Certification Interface (Issue #46)
+export interface OrganicCertification {
+  isCertified: boolean;
+  expiryDate?: string | null;
+  documentUrl?: string;
+  certificateNumber?: string;
+}
+
+// Water Source Information Interface (Issue #43)
+export interface WaterSourcesInfo {
+  primary: string;
+  secondary?: string;
+  availableYearRound: boolean;
+  description?: string;
+}
 
 export interface Orchard {
   _id: string;
@@ -79,9 +102,20 @@ export interface Orchard {
   favouriteCount: number;
   ratingAverage: number;
   ratingCount: number;
+
+  // Water & Irrigation Details (Issue #43)
+  waterSources?: WaterSourcesInfo;
+  waterSource?: string;
+  irrigationMethod?: string;
+  irrigationFrequency?: string;
+
+  // Organic Certification Details (Issue #46)
+  organicCertification?: OrganicCertification;
+
   seo?: { metaTitle?: string; metaDescription?: string; keywords?: string[] };
   createdAt: string;
   updatedAt: string;
+  organicCertification?: OrganicCertification;
 }
 
 export type BookingStatus =
