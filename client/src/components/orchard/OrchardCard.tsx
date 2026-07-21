@@ -47,6 +47,22 @@ export function OrchardCard({
               Featured
             </span>
           )}
+          {orchard.healthScore && (
+            <span
+              className={cn(
+                'rounded-full px-2.5 py-1 text-[11.5px] font-bold tracking-[.02em] border shadow-sm',
+                orchard.healthScore.score >= 90
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                  : orchard.healthScore.score >= 75
+                    ? 'bg-green-50 text-green-800 border-green-200'
+                    : orchard.healthScore.score >= 60
+                      ? 'bg-amber-50 text-amber-800 border-amber-200'
+                      : 'bg-orange-50/70 text-terra border-orange-200'
+              )}
+            >
+              🌱 {orchard.healthScore.rating} {orchard.healthScore.score}/100
+            </span>
+          )}
         </div>
 
         {/* actions */}

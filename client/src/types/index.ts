@@ -108,6 +108,15 @@ export interface Orchard {
 
   organicCertification?: OrganicCertification;
 
+  // Health fields (Issue #72)
+  soilFertility?: 'High' | 'Medium' | 'Low' | 'Unknown';
+  waterSourceQuality?: 'High' | 'Medium' | 'Low' | 'Unknown';
+  pestHistory?: 'Low' | 'Medium' | 'High' | 'Unknown';
+  diseaseHistory?: 'Low' | 'Medium' | 'High' | 'Unknown';
+  maintenanceStatus?: 'Good' | 'Average' | 'Poor' | 'Unknown';
+  orchardAge?: number;
+  healthScore?: HealthScoreData;
+
   seo?: { metaTitle?: string; metaDescription?: string; keywords?: string[] };
   createdAt: string;
   updatedAt: string;
@@ -240,5 +249,25 @@ export interface Question {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface HealthScoreBreakdown {
+  soil: number;
+  irrigation: number;
+  maintenance: number;
+  production: number;
+  certification: number;
+  pestHistory: number;
+  diseaseHistory?: number;
+  waterSource?: number;
+  orchardAge?: number;
+}
+
+export interface HealthScoreData {
+  score: number;
+  rating: 'Excellent' | 'Good' | 'Fair' | 'Needs Improvement';
+  breakdown: HealthScoreBreakdown;
+  updatedAt?: string;
+}
+
 
 

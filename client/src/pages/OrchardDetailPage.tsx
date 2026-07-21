@@ -30,6 +30,7 @@ import { OrchardQA } from '@/components/orchard/OrchardQA';
 import { OrchardCard as OrchardMini } from '@/components/orchard/OrchardCard';
 import { OrchardMap } from '@/components/orchard/OrchardMap';
 import { WeatherCard } from '@/components/orchard/WeatherCard';
+import { OrchardHealthScore } from '@/components/orchard/OrchardHealthScore';
 import { formatCurrency, formatDate, titleCase } from '@/lib/format';
 import { orchardSurface } from '@/lib/gradients';
 import { getErrorMessage } from '@/lib/apiClient';
@@ -305,6 +306,11 @@ export default function OrchardDetailPage() {
             ))}
           </div>
           
+          {/* Health Score Dashboard Card (Issue #72) */}
+          <div className="mb-8">
+            <OrchardHealthScore orchardId={orchard._id} />
+          </div>
+
           {/* Interactive Map Component Section (Issue #33) */}
           <h2 className="mb-3.5 font-serif text-[19px] font-semibold">Interactive Location Map</h2>
           <div className="mb-8">

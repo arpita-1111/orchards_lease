@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
+import { cn } from '@/lib/cn';
 import { sellerService, type SellerOverview as Overview, type RevenuePoint } from '@/services/seller.service';
 import { bookingService } from '@/services/booking.service';
 import { orchardService } from '@/services/orchard.service';
@@ -249,6 +250,81 @@ export default function SellerOverview() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Orchard Health Overview Section (Issue #72) */}
+      <div className="mt-6 rounded-[18px] border border-sand bg-cream p-[22px]">
+        <h2 className="mb-4 font-serif text-[18px] font-semibold">Orchard Health Overview</h2>
+        {myOrchards.length === 0 ? (
+          <p className="py-4 text-center text-sm text-faint font-semibold">No orchards listed yet. Add an orchard to calculate its health score!</p>
+        ) : (
+          <div className="space-y-4">
+            {myOrchards.map((o) => {
+              const score = o.healthScore?.score ?? 0;
+              const rating = o.healthScore?.rating ?? 'Needs Improvement';
+              
+              // Generate completion suggestions based on parameters
+              const tips = [];
+              if (!o.irrigationMethod || o.irrigationMethod.toLowerCase() === 'none') {
+                tips.push('Add irrigation details to improve your Orchard Health Score.');
+              }
+              if (!o.soilFertility || o.soilFertility === 'Unknown') {
+                tips.push('Provide soil fertility details to increase your score.');
+              }
+              if (!o.maintenanceStatus || o.maintenanceStatus === 'Unknown') {
+                tips.push('Specify the maintenance status of your orchard to boost score.');
+              }
+              if (!o.waterSourceQuality || o.waterSourceQuality === 'Unknown') {
+                tips.push('Add water source quality details to optimize rating.');
+              }
+              if (!o.organicCertification?.isCertified) {
+                tips.push('Verify organic certification to gain compliance points.');
+              }
+
+              const pillTone = score >= 90
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                : score >= 75
+                  ? 'bg-green-50 text-green-800 border-green-200'
+                  : score >= 60
+                    ? 'bg-amber-50 text-amber-800 border-amber-200'
+                    : 'bg-orange-50/70 text-terra border-orange-200';
+
+              return (
+                <div key={o._id} className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-sand bg-cream p-4 hover:shadow-soft transition-shadow">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-forest/10 text-forest text-base font-bold">
+                      🌳
+                    </div>
+                    <div>
+                      <h4 className="font-serif text-[15px] font-semibold text-ink">{o.gardenName}</h4>
+                      <p className="text-[12.5px] text-faint">{o.district}, {o.state} · {o.fruitTypes[0]}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-4">
+                    <div className={cn('rounded-full border px-3 py-1 text-xs font-bold shadow-sm', pillTone)}>
+                      {rating} · {score}/100
+                    </div>
+                    
+                    <button
+                      onClick={() => navigate(`/seller/orchards/${o._id}/edit`)}
+                      className="rounded-[9px] border border-sand bg-white px-3.5 py-1.5 text-xs font-bold text-ink hover:bg-chip transition-colors"
+                    >
+                      Improve Profile
+                    </button>
+                  </div>
+
+                  {tips.length > 0 && score < 90 && (
+                    <div className="w-full mt-2.5 border-t border-sand/40 pt-2.5 text-xs font-semibold text-forest flex items-center gap-2">
+                      <span className="flex h-2 w-2 rounded-full bg-forest animate-ping" />
+                      <span>Tip: {tips[0]}</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </main>
   );

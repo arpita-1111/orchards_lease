@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, MoreVertical, Copy, EyeOff, Eye, Archive, Trash2 } from 'lucide-react';
+import { cn } from '@/lib/cn';
 import { orchardService } from '@/services/orchard.service';
 import { bookingService } from '@/services/booking.service';
 import { EmptyState, Spinner } from '@/components/ui';
@@ -97,6 +98,20 @@ export default function SellerOrchards() {
                 <div className="flex flex-wrap items-center gap-2.5">
                   <h3 className="font-serif text-base font-semibold leading-tight">{o.gardenName}</h3>
                   {statusPill(o)}
+                  {o.healthScore && (
+                    <span className={cn(
+                      "rounded-full px-2.5 py-1 text-[11.5px] font-bold border shadow-sm",
+                      o.healthScore.score >= 90
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                        : o.healthScore.score >= 75
+                          ? 'bg-green-50 text-green-800 border-green-200'
+                          : o.healthScore.score >= 60
+                            ? 'bg-amber-50 text-amber-800 border-amber-200'
+                            : 'bg-orange-50/70 text-terra border-orange-200'
+                    )}>
+                      🌱 {o.healthScore.rating} {o.healthScore.score}/100
+                    </span>
+                  )}
                 </div>
                 <p className="mt-1 text-[12.5px] text-faint">
                   {o.district}, {o.state} · {o.fruitTypes[0]}

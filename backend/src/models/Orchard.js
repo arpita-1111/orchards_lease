@@ -4,6 +4,7 @@ import {
   RENT_TYPE,
   AREA_UNIT,
 } from '../utils/constants.js';
+import { calculateHealthScore } from '../services/healthScore.service.js';
 
 const imageSchema = new mongoose.Schema(
   {
@@ -146,6 +147,53 @@ const orchardSchema = new mongoose.Schema(
     publishedAt: { type: Date },
     archivedAt: { type: Date },
     deletedAt: { type: Date, default: null },
+
+    // Health Score Fields (Issue #72)
+    soilFertility: {
+      type: String,
+      enum: ['High', 'Medium', 'Low', 'Unknown'],
+      default: 'Unknown',
+    },
+    waterSourceQuality: {
+      type: String,
+      enum: ['High', 'Medium', 'Low', 'Unknown'],
+      default: 'Unknown',
+    },
+    pestHistory: {
+      type: String,
+      enum: ['Low', 'Medium', 'High', 'Unknown'],
+      default: 'Unknown',
+    },
+    diseaseHistory: {
+      type: String,
+      enum: ['Low', 'Medium', 'High', 'Unknown'],
+      default: 'Unknown',
+    },
+    maintenanceStatus: {
+      type: String,
+      enum: ['Good', 'Average', 'Poor', 'Unknown'],
+      default: 'Unknown',
+    },
+    orchardAge: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    healthScore: {
+      score: { type: Number, default: 0, min: 0, max: 100 },
+      rating: { type: String, default: 'Needs Improvement' },
+      breakdown: {
+        soil: { type: Number, default: 0 },
+        irrigation: { type: Number, default: 0 },
+        maintenance: { type: Number, default: 0 },
+        production: { type: Number, default: 0 },
+        certification: { type: Number, default: 0 },
+        pestHistory: { type: Number, default: 0 },
+        diseaseHistory: { type: Number, default: 0 },
+        waterSource: { type: Number, default: 0 },
+        orchardAge: { type: Number, default: 0 },
+      },
+    },
   },
   {
     timestamps: true,
@@ -170,6 +218,12 @@ orchardSchema.virtual('seller', {
   localField: 'sellerId',
   foreignField: '_id',
   justOne: true,
+});
+
+// Pre-save hook to calculate/cache health score
+orchardSchema.pre('save', function (next) {
+  this.healthScore = calculateHealthScore(this);
+  next();
 });
 
 const Orchard = mongoose.model('Orchard', orchardSchema);

@@ -40,6 +40,14 @@ const empty = {
 
   plantationYear: 2020,
 
+  // Health Score Parameters (Issue #72)
+  soilFertility: 'Unknown',
+  waterSourceQuality: 'Unknown',
+  pestHistory: 'Unknown',
+  diseaseHistory: 'Unknown',
+  maintenanceStatus: 'Unknown',
+  orchardAge: 0,
+
   // Water Sources & Irrigation (Issue #43)
   waterPrimarySource: 'Borewell',
   waterSecondarySource: 'None',
@@ -110,6 +118,13 @@ export default function OrchardForm() {
 
       plantationYear: (o as any).plantationYear || 2020,
 
+      soilFertility: (o as any).soilFertility || 'Unknown',
+      waterSourceQuality: (o as any).waterSourceQuality || 'Unknown',
+      pestHistory: (o as any).pestHistory || 'Unknown',
+      diseaseHistory: (o as any).diseaseHistory || 'Unknown',
+      maintenanceStatus: (o as any).maintenanceStatus || 'Unknown',
+      orchardAge: (o as any).orchardAge || 0,
+
       // Water Sources Hydration (Issue #43)
       waterPrimarySource: (o as any).waterSources?.primary || (o as any).waterSource || 'Borewell',
       waterSecondarySource: (o as any).waterSources?.secondary || 'None',
@@ -153,6 +168,13 @@ export default function OrchardForm() {
       ...form,
       latitude: Number(form.latitude),
       longitude: Number(form.longitude),
+
+      soilFertility: form.soilFertility,
+      waterSourceQuality: form.waterSourceQuality,
+      pestHistory: form.pestHistory,
+      diseaseHistory: form.diseaseHistory,
+      maintenanceStatus: form.maintenanceStatus,
+      orchardAge: Number(form.orchardAge),
 
       // Water Sources Payload Structure (Issue #43)
       waterSources: {
@@ -296,6 +318,63 @@ export default function OrchardForm() {
               </option>
             ))}
           </Select>
+        </Card>
+
+        {/* Orchard Health Parameters Section (Issue #72) */}
+        <Card className="p-6 space-y-4">
+          <div>
+            <p className="text-sm font-semibold text-ink">Orchard Health Parameters</p>
+            <p className="text-xs text-faint">Specify these parameters to calculate your listing's dynamic Health Score.</p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Select label="Soil Fertility" value={form.soilFertility} onChange={(e) => set('soilFertility', e.target.value)}>
+              <option value="Unknown">Unknown / Not Set</option>
+              <option value="High">High Fertility (Nutrient-rich)</option>
+              <option value="Medium">Medium Fertility (Standard)</option>
+              <option value="Low">Low Fertility (Requires Supplementation)</option>
+            </Select>
+
+            <Select label="Water Source Quality" value={form.waterSourceQuality} onChange={(e) => set('waterSourceQuality', e.target.value)}>
+              <option value="Unknown">Unknown / Not Set</option>
+              <option value="High">High Quality (Sweet / Potable)</option>
+              <option value="Medium">Medium Quality (Normal / Brackish)</option>
+              <option value="Low">Low Quality (Salty / Contaminated)</option>
+            </Select>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Select label="Pest History" value={form.pestHistory} onChange={(e) => set('pestHistory', e.target.value)}>
+              <option value="Unknown">Unknown / Not Set</option>
+              <option value="Low">Low (No recent outbreaks)</option>
+              <option value="Medium">Medium (Occasional outbreaks)</option>
+              <option value="High">High (Frequent infestation)</option>
+            </Select>
+
+            <Select label="Disease History" value={form.diseaseHistory} onChange={(e) => set('diseaseHistory', e.target.value)}>
+              <option value="Unknown">Unknown / Not Set</option>
+              <option value="Low">Low (No recent crop disease)</option>
+              <option value="Medium">Medium (Occasional mildew/rot)</option>
+              <option value="High">High (Severe disease history)</option>
+            </Select>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Select label="Maintenance Status" value={form.maintenanceStatus} onChange={(e) => set('maintenanceStatus', e.target.value)}>
+              <option value="Unknown">Unknown / Not Set</option>
+              <option value="Good">Good (Pruned, cleared, managed)</option>
+              <option value="Average">Average (Basic cleaning)</option>
+              <option value="Poor">Poor (Neglected / Overgrown)</option>
+            </Select>
+
+            <Input 
+              label="Orchard Age (in Years)" 
+              type="number" 
+              min={0}
+              value={form.orchardAge} 
+              onChange={(e) => set('orchardAge', Number(e.target.value) || 0)} 
+            />
+          </div>
         </Card>
 
         {/* Soil Composition Section */}
