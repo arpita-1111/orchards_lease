@@ -21,6 +21,7 @@ import SellerOrchards from '@/pages/seller/SellerOrchards';
 import OrchardForm from '@/pages/seller/OrchardForm';
 import SellerBookings from '@/pages/seller/SellerBookings';
 import SellerLeaseHistory from '@/pages/seller/SellerLeaseHistory';
+import SellerQuestions from '@/pages/seller/SellerQuestions';
 
 import AdminOverview from '@/pages/admin/AdminOverview';
 import AdminUsers from '@/pages/admin/AdminUsers';
@@ -105,6 +106,7 @@ export default function App() {
           <Route path="add-image" element={<AddImageForm />} />
           <Route path="bookings" element={<SellerBookings />} />
           <Route path="lease-history" element={<SellerLeaseHistory />} />
+          <Route path="questions" element={<SellerQuestions />} />
 
           {/* Seller Specific Profile Route (Resolves to /seller/profile) */}
           <Route path="profile" element={<ProfilePage />} />

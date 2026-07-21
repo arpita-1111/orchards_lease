@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import * as orchard from '../controllers/orchard.controller.js';
 import * as review from '../controllers/review.controller.js';
+import * as question from '../controllers/question.controller.js';
 import { requireAuth, optionalAuth } from '../middleware/auth.middleware.js';
 import { restrictTo } from '../middleware/role.middleware.js';
 import { validate } from '../middleware/validate.middleware.js';
@@ -12,6 +13,10 @@ import {
   orchardQuerySchema,
 } from '../validators/orchard.validator.js';
 import { idParam, slugParam } from '../validators/common.validator.js';
+import {
+  listQuestionsQuerySchema,
+  createQuestionSchema,
+} from '../validators/question.validator.js';
 
 const router = Router();
 
@@ -64,5 +69,9 @@ router.get('/:slug/related', validate({ params: slugParam }), orchard.getRelated
 
 /* ------------------------ Nested reviews --------------------------- */
 router.get('/:orchardId/reviews', review.listOrchardReviews);
+
+/* -------------------------- Nested Q&As ---------------------------- */
+router.get('/:id/questions', optionalAuth, validate({ params: idParam, ...listQuestionsQuerySchema }), question.listOrchardQuestions);
+router.post('/:id/questions', requireAuth, validate({ params: idParam, ...createQuestionSchema }), question.createQuestion);
 
 export default router;

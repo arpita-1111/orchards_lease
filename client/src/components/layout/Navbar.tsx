@@ -128,6 +128,9 @@ export function Navbar() {
               <NavLink to="/seller/lease-history" className={navBtn}>
                 Lease History
               </NavLink>
+              <NavLink to="/seller/questions" className={navBtn}>
+                Q&A
+              </NavLink>
             </>
           )}
 
