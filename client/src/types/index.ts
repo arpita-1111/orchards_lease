@@ -53,6 +53,22 @@ export type OrchardStatus =
   | 'rejected'
   | 'archived';
 
+// Organic Certification Interface (Issue #46)
+export interface OrganicCertification {
+  isCertified: boolean;
+  expiryDate?: string | null;
+  documentUrl?: string;
+  certificateNumber?: string;
+}
+
+// Water Source Information Interface (Issue #43)
+export interface WaterSourcesInfo {
+  primary: string;
+  secondary?: string;
+  availableYearRound: boolean;
+  description?: string;
+}
+
 export interface Orchard {
   _id: string;
   sellerId: string | Pick<User, '_id' | 'name' | 'avatar' | 'bio' | 'createdAt'>;
@@ -86,6 +102,16 @@ export interface Orchard {
   favouriteCount: number;
   ratingAverage: number;
   ratingCount: number;
+
+  // Water & Irrigation Details (Issue #43)
+  waterSources?: WaterSourcesInfo;
+  waterSource?: string;
+  irrigationMethod?: string;
+  irrigationFrequency?: string;
+
+  // Organic Certification Details (Issue #46)
+  organicCertification?: OrganicCertification;
+
   seo?: { metaTitle?: string; metaDescription?: string; keywords?: string[] };
   createdAt: string;
   updatedAt: string;

@@ -17,7 +17,8 @@ import {
   ShoppingBag,  // For Agricultural Stores
   Sprout,       // For Organic Badge
   FileText,     // For Certificate Document
-  ExternalLink  // For Document Link
+  ExternalLink, // For Document Link
+  Droplets      // For Water Icon
 } from 'lucide-react';
 import { orchardService } from '@/services/orchard.service';
 import { bookingService } from '@/services/booking.service';
@@ -121,6 +122,7 @@ export default function OrchardDetailPage() {
   const plantationYear = (orchard as any).plantationYear || 2020;
   const calculatedAge = 2026 - plantationYear;
   const organicCert = (orchard as any).organicCertification;
+  const waterInfo = (orchard as any).waterSources;
 
   const stats = [
     { k: 'Total trees', v: orchard.totalTrees.toLocaleString() },
@@ -315,21 +317,52 @@ export default function OrchardDetailPage() {
             </p>
           </div>
 
-          {/* Water & Irrigation Systems Component Block */}
+          {/* Water & Irrigation Systems Component Block (Issue #43) */}
           <h2 className="mb-3.5 font-serif text-[19px] font-semibold">Water &amp; Irrigation Systems</h2>
-          <div className="mb-7 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <div className="rounded-xl border border-sand bg-cream p-3.5 text-center">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-faint mb-1">Method</div>
-              <div className="text-sm font-bold text-forest">{(orchard as any).irrigationMethod || 'Drip'}</div>
+          <div className="mb-7 rounded-xl border border-sand bg-cream p-5 space-y-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+              <div className="rounded-lg bg-chip/60 p-3 text-center">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-faint mb-1">Primary Source</div>
+                <div className="text-sm font-bold text-forest">
+                  {waterInfo?.primary || (orchard as any).waterSource || 'Borewell'}
+                </div>
+              </div>
+
+              <div className="rounded-lg bg-chip/60 p-3 text-center">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-faint mb-1">Secondary Source</div>
+                <div className="text-sm font-bold text-ink">
+                  {waterInfo?.secondary || 'None'}
+                </div>
+              </div>
+
+              <div className="rounded-lg bg-chip/60 p-3 text-center">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-faint mb-1">Method</div>
+                <div className="text-sm font-bold text-forest">{(orchard as any).irrigationMethod || 'Drip'}</div>
+              </div>
+
+              <div className="rounded-lg bg-chip/60 p-3 text-center">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-faint mb-1">Frequency</div>
+                <div className="text-sm font-bold text-ink">{(orchard as any).irrigationFrequency || 'Weekly'}</div>
+              </div>
             </div>
-            <div className="rounded-xl border border-sand bg-cream p-3.5 text-center">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-faint mb-1">Water Source</div>
-              <div className="text-sm font-bold text-ink">{(orchard as any).waterSource || 'Borewell'}</div>
+
+            <div className="flex items-center gap-2 pt-1 text-sm">
+              <span className={cn(
+                "inline-block h-2.5 w-2.5 rounded-full",
+                waterInfo?.availableYearRound ?? true ? "bg-emerald-500" : "bg-amber-500"
+              )} />
+              <span className="font-semibold text-ink">
+                {waterInfo?.availableYearRound ?? true
+                  ? "Year-Round Water Supply Available (12 Months)"
+                  : "Seasonal Water Supply / Restricted Summer Availability"}
+              </span>
             </div>
-            <div className="rounded-xl border border-sand bg-cream p-3.5 text-center">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-faint mb-1">Frequency</div>
-              <div className="text-sm font-bold text-ink">{(orchard as any).irrigationFrequency || 'Weekly'}</div>
-            </div>
+
+            {waterInfo?.description && (
+              <p className="text-xs leading-relaxed text-sub border-t border-sand/60 pt-3">
+                {waterInfo.description}
+              </p>
+            )}
           </div>
 
           {orchard.amenities.length > 0 && (

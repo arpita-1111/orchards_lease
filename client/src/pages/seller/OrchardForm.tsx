@@ -30,16 +30,19 @@ const empty = {
   amenities: [] as string[],
   available: true,
 
-  // Water & Irrigation
-  irrigationMethod: 'Drip',
-  waterSource: 'Borewell',
-  irrigationFrequency: 'Weekly',
-
   // Soil Quality
   soilType: 'Loamy',
   soilDescription: '',
 
   plantationYear: 2020,
+
+  // Water Sources & Irrigation (Issue #43)
+  waterPrimarySource: 'Borewell',
+  waterSecondarySource: 'None',
+  waterAvailableYearRound: true,
+  waterSourceDescription: '',
+  irrigationMethod: 'Drip',
+  irrigationFrequency: 'Weekly',
 
   // Organic Certification (Issue #46)
   isOrganicallyCertified: false,
@@ -93,16 +96,21 @@ export default function OrchardForm() {
       price: o.price,
       amenities: o.amenities,
       available: o.available,
-      irrigationMethod: (o as any).irrigationMethod || 'Drip',
-      waterSource: (o as any).waterSource || 'Borewell',
-      irrigationFrequency: (o as any).irrigationFrequency || 'Weekly',
 
       soilType: (o as any).soilType || 'Loamy',
       soilDescription: (o as any).soilDescription || '',
 
       plantationYear: (o as any).plantationYear || 2020,
 
-      // Organic Certification Hydration
+      // Water Sources Hydration (Issue #43)
+      waterPrimarySource: (o as any).waterSources?.primary || (o as any).waterSource || 'Borewell',
+      waterSecondarySource: (o as any).waterSources?.secondary || 'None',
+      waterAvailableYearRound: (o as any).waterSources?.availableYearRound ?? true,
+      waterSourceDescription: (o as any).waterSources?.description || '',
+      irrigationMethod: (o as any).irrigationMethod || 'Drip',
+      irrigationFrequency: (o as any).irrigationFrequency || 'Weekly',
+
+      // Organic Certification Hydration (Issue #46)
       isOrganicallyCertified: (o as any).organicCertification?.isCertified || false,
       certificationExpiryDate: (o as any).organicCertification?.expiryDate
         ? new Date((o as any).organicCertification.expiryDate).toISOString().split('T')[0]
@@ -135,6 +143,16 @@ export default function OrchardForm() {
 
     const payload = {
       ...form,
+      // Water Sources Payload Structure (Issue #43)
+      waterSources: {
+        primary: form.waterPrimarySource,
+        secondary: form.waterSecondarySource,
+        availableYearRound: form.waterAvailableYearRound,
+        description: form.waterSourceDescription,
+      },
+      waterSource: form.waterPrimarySource,
+
+      // Organic Certification Payload Structure (Issue #46)
       organicCertification: {
         isCertified: form.isOrganicallyCertified,
         expiryDate: form.isOrganicallyCertified && form.certificationExpiryDate ? form.certificationExpiryDate : null,
@@ -266,6 +284,77 @@ export default function OrchardForm() {
                 placeholder="Describe nutrient conditions, fertilizer history, organic matter, or approximate pH levels..."
               />
             </div>
+          </div>
+        </Card>
+
+        {/* Water Source & Irrigation Section (Issue #43) */}
+        <Card className="p-6 space-y-4">
+          <div>
+            <p className="text-sm font-semibold text-ink">Water Sources &amp; Irrigation Reliability</p>
+            <p className="text-xs text-faint">Specify how water is supplied to help renters evaluate year-round reliability.</p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Select label="Primary Water Source" value={form.waterPrimarySource} onChange={(e) => set('waterPrimarySource', e.target.value)}>
+              <option value="Borewell">Borewell</option>
+              <option value="Canal">Canal System</option>
+              <option value="River">River / Stream</option>
+              <option value="Well">Open Well</option>
+              <option value="Rainwater Harvesting">Rainwater Harvesting Reservoir</option>
+              <option value="Drip Connection">Municipal / Utility Drip Line</option>
+              <option value="Other">Other</option>
+            </Select>
+
+            <Select label="Secondary Water Source (Backup)" value={form.waterSecondarySource} onChange={(e) => set('waterSecondarySource', e.target.value)}>
+              <option value="None">None (Single Source)</option>
+              <option value="Borewell">Borewell</option>
+              <option value="Canal">Canal System</option>
+              <option value="River">River / Stream</option>
+              <option value="Well">Open Well</option>
+              <option value="Rainwater Harvesting">Rainwater Harvesting Reservoir</option>
+              <option value="Other">Other</option>
+            </Select>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Select label="Irrigation Method" value={form.irrigationMethod} onChange={(e) => set('irrigationMethod', e.target.value)}>
+              <option value="Drip">Drip Irrigation</option>
+              <option value="Sprinkler">Sprinkler System</option>
+              <option value="Flood">Flood / Channel Irrigation</option>
+              <option value="Manual">Manual Hose / Tanker</option>
+            </Select>
+
+            <Select label="Irrigation Frequency" value={form.irrigationFrequency} onChange={(e) => set('irrigationFrequency', e.target.value)}>
+              <option value="Daily">Daily</option>
+              <option value="Alternate Days">Alternate Days</option>
+              <option value="Weekly">Weekly</option>
+              <option value="Bi-weekly">Bi-weekly</option>
+              <option value="As Needed">Seasonal / As Needed</option>
+            </Select>
+          </div>
+
+          <div className="pt-1">
+            <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-ink">
+              <input
+                type="checkbox"
+                checked={form.waterAvailableYearRound}
+                onChange={(e) => set('waterAvailableYearRound', e.target.checked)}
+                className="h-4 w-4 rounded border-sand text-forest focus:ring-forest"
+              />
+              Water available throughout the year (12-month supply)
+            </label>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-sub">
+              Water Supply Notes / Seasonal Variation Details
+            </label>
+            <textarea
+              value={form.waterSourceDescription}
+              onChange={(e) => set('waterSourceDescription', e.target.value)}
+              className="w-full h-20 rounded-xl border border-sand bg-cream px-4 py-2.5 text-sm text-ink outline-none focus:border-forest resize-none"
+              placeholder="Mention water depth, pump horsepower, summer availability notes, or canal schedule..."
+            />
           </div>
         </Card>
 
