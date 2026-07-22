@@ -150,6 +150,9 @@ export default function ExplorePage() {
   const minTrees    = Number(params.get('minTrees') || 0);
   const rating      = Number(params.get('rating')   || 0);
   const availableOnly = params.get('available') === 'true';
+  const harvestThisMonth = params.get('harvestThisMonth') === 'true';
+  const upcomingHarvest = params.get('upcomingHarvest') === 'true';
+  const peakSeason = params.get('peakSeason') === 'true';
   const rentType    = params.get('rentType')  ?? '';
   const district    = params.get('district')  ?? '';
 
@@ -192,6 +195,9 @@ export default function ExplorePage() {
       minTrees:  minTrees || undefined,
       rating:    rating   || undefined,
       available: availableOnly ? true : undefined,
+      harvestThisMonth: harvestThisMonth ? true : undefined,
+      upcomingHarvest: upcomingHarvest ? true : undefined,
+      peakSeason: peakSeason ? true : undefined,
       page:      params.get('page') ? Number(params.get('page')) : 1,
     };
     try {
@@ -233,10 +239,14 @@ export default function ExplorePage() {
     (district               ? 1 : 0) +
     (rentType               ? 1 : 0) +
     (availableOnly          ? 1 : 0) +
+    (harvestThisMonth       ? 1 : 0) +
+    (upcomingHarvest        ? 1 : 0) +
+    (peakSeason             ? 1 : 0) +
     (rating                 ? 1 : 0) +
     (params.get('minPrice') ? 1 : 0) +
     (params.get('maxPrice') ? 1 : 0) +
     (minTrees > 0           ? 1 : 0);
+
 
   /* ── Amenity list ── */
   const allAmenities   = options?.availableAmenities ?? [];
@@ -486,18 +496,63 @@ export default function ExplorePage() {
               </div>
             </FilterSection>
 
-            {/* ── 8. Availability ── */}
-            <FilterSection label="Availability" sKey="avail" badge={availableOnly ? 1 : 0} onClear={() => set('available')}>
-              <label className="flex cursor-pointer items-center gap-2.5 text-[13px] font-semibold">
-                <input
-                  id="filter-available"
-                  type="checkbox"
-                  checked={availableOnly}
-                  onChange={(e) => set('available', e.target.checked ? 'true' : '')}
-                  className="h-[16px] w-[16px] cursor-pointer accent-forest"
-                />
-                Available now only
-              </label>
+            {/* ── 8. Availability & Harvest ── */}
+            <FilterSection
+              label="Availability & Harvest"
+              sKey="avail"
+              badge={(availableOnly ? 1 : 0) + (harvestThisMonth ? 1 : 0) + (upcomingHarvest ? 1 : 0) + (peakSeason ? 1 : 0)}
+              onClear={() => {
+                set('available');
+                set('harvestThisMonth');
+                set('upcomingHarvest');
+                set('peakSeason');
+              }}
+            >
+              <div className="flex flex-col gap-2.5">
+                <label className="flex cursor-pointer items-center gap-2.5 text-[13px] font-semibold">
+                  <input
+                    id="filter-available"
+                    type="checkbox"
+                    checked={availableOnly}
+                    onChange={(e) => set('available', e.target.checked ? 'true' : '')}
+                    className="h-[16px] w-[16px] cursor-pointer accent-forest"
+                  />
+                  Available now only
+                </label>
+
+                <label className="flex cursor-pointer items-center gap-2.5 text-[13px] font-semibold">
+                  <input
+                    id="filter-harvest-this-month"
+                    type="checkbox"
+                    checked={harvestThisMonth}
+                    onChange={(e) => set('harvestThisMonth', e.target.checked ? 'true' : '')}
+                    className="h-[16px] w-[16px] cursor-pointer accent-forest"
+                  />
+                  Harvesting this month
+                </label>
+
+                <label className="flex cursor-pointer items-center gap-2.5 text-[13px] font-semibold">
+                  <input
+                    id="filter-upcoming-harvest"
+                    type="checkbox"
+                    checked={upcomingHarvest}
+                    onChange={(e) => set('upcomingHarvest', e.target.checked ? 'true' : '')}
+                    className="h-[16px] w-[16px] cursor-pointer accent-forest"
+                  />
+                  Upcoming harvest
+                </label>
+
+                <label className="flex cursor-pointer items-center gap-2.5 text-[13px] font-semibold">
+                  <input
+                    id="filter-peak-season"
+                    type="checkbox"
+                    checked={peakSeason}
+                    onChange={(e) => set('peakSeason', e.target.checked ? 'true' : '')}
+                    className="h-[16px] w-[16px] cursor-pointer accent-forest"
+                  />
+                  Peak harvest season
+                </label>
+              </div>
             </FilterSection>
 
             {mobileFilters && (
@@ -576,8 +631,27 @@ export default function ExplorePage() {
                     <X className="h-3 w-3 cursor-pointer" onClick={() => set('available')} />
                   </span>
                 )}
+                {harvestThisMonth && (
+                  <span className="flex items-center gap-1 rounded-full bg-avail px-3 py-1 text-[11.5px] font-semibold text-forest">
+                    Harvesting this month
+                    <X className="h-3 w-3 cursor-pointer" onClick={() => set('harvestThisMonth')} />
+                  </span>
+                )}
+                {upcomingHarvest && (
+                  <span className="flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-[11.5px] font-semibold text-amber-800 border border-amber-200">
+                    Upcoming harvest
+                    <X className="h-3 w-3 cursor-pointer" onClick={() => set('upcomingHarvest')} />
+                  </span>
+                )}
+                {peakSeason && (
+                  <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-[11.5px] font-semibold text-emerald-800 border border-emerald-200">
+                    ⭐ Peak season
+                    <X className="h-3 w-3 cursor-pointer" onClick={() => set('peakSeason')} />
+                  </span>
+                )}
               </div>
             )}
+
 
             {/* Cards / empty / skeleton */}
             {loading ? (

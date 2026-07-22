@@ -19,6 +19,7 @@ import ResetPasswordPage from '@/pages/auth/ResetPasswordPage';
 import SellerOverview from '@/pages/seller/SellerOverview';
 import SellerOrchards from '@/pages/seller/SellerOrchards';
 import OrchardForm from '@/pages/seller/OrchardForm';
+import HarvestSchedulePage from '@/pages/seller/HarvestSchedulePage';
 import SellerBookings from '@/pages/seller/SellerBookings';
 import SellerLeaseHistory from '@/pages/seller/SellerLeaseHistory';
 import SellerQuestions from '@/pages/seller/SellerQuestions';
@@ -103,6 +104,7 @@ export default function App() {
           <Route path="orchards" element={<SellerOrchards />} />
           <Route path="orchards/new" element={<OrchardForm />} />
           <Route path="orchards/:id/edit" element={<OrchardForm />} />
+          <Route path="orchards/:id/harvest" element={<HarvestSchedulePage />} />
           <Route path="add-image" element={<AddImageForm />} />
           <Route path="bookings" element={<SellerBookings />} />
           <Route path="lease-history" element={<SellerLeaseHistory />} />

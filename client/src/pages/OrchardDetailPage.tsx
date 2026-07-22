@@ -31,6 +31,7 @@ import { OrchardCard as OrchardMini } from '@/components/orchard/OrchardCard';
 import { OrchardMap } from '@/components/orchard/OrchardMap';
 import { WeatherCard } from '@/components/orchard/WeatherCard';
 import { OrchardHealthScore } from '@/components/orchard/OrchardHealthScore';
+import { HarvestTimeline } from '@/components/orchard/HarvestTimeline';
 import { formatCurrency, formatDate, titleCase } from '@/lib/format';
 import { orchardSurface } from '@/lib/gradients';
 import { getErrorMessage } from '@/lib/apiClient';
@@ -304,6 +305,10 @@ export default function OrchardDetailPage() {
                 </div>
               </div>
             ))}
+          </div>
+
+          <div className="mb-7">
+            <HarvestTimeline harvestSeasons={orchard.harvestSeasons} />
           </div>
           
           {/* Health Score Dashboard Card (Issue #72) */}
