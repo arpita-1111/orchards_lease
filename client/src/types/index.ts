@@ -395,6 +395,17 @@ export interface HarvestInfo {
   isCurrentlyHarvesting: boolean;
 }
 
+export interface RecommendationItem {
+  orchard: Orchard;
+  score: number;
+  reasons: string[];
+}
+
+export interface RecommendationResponse {
+  recommendations: RecommendationItem[];
+}
+
+
 
 
 
