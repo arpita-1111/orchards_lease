@@ -9,6 +9,8 @@ export interface OrchardFilters {
   fruit?: string;
   state?: string;
   district?: string;
+  rentType?: string;
+  amenities?: string;
   minPrice?: number;
   maxPrice?: number;
   minTrees?: number;

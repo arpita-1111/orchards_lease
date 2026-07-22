@@ -54,6 +54,32 @@ const historyEntrySchema = new mongoose.Schema(
   { _id: false }
 );
 
+// Structured Water Source Schema (Issue #43)
+const waterSourcesSchema = new mongoose.Schema(
+  {
+    primary: {
+      type: String,
+      default: 'Borewell',
+      trim: true,
+    },
+    secondary: {
+      type: String,
+      default: 'None',
+      trim: true,
+    },
+    availableYearRound: {
+      type: Boolean,
+      default: true,
+    },
+    description: {
+      type: String,
+      default: '',
+      maxlength: 1000,
+    },
+  },
+  { _id: false }
+);
+
 const orchardSchema = new mongoose.Schema(
   {
     sellerId: {
@@ -82,6 +108,23 @@ const orchardSchema = new mongoose.Schema(
     estimatedHarvestDate: { type: Date },
     totalArea: { type: Number, default: 0, min: 0 },
     areaUnit: { type: String, enum: Object.values(AREA_UNIT), default: AREA_UNIT.ACRE },
+
+    // water & irrigation details (Issue #43)
+    waterSources: {
+      type: waterSourcesSchema,
+      default: () => ({}),
+    },
+    waterSource: { type: String, default: 'Borewell' }, // Legacy/fallback field
+    irrigationMethod: { type: String, default: 'Drip' },
+    irrigationFrequency: { type: String, default: 'Weekly' },
+
+    // organic certification (Issue #46)
+    organicCertification: {
+      isCertified: { type: Boolean, default: false, index: true },
+      expiryDate: { type: Date, default: null },
+      documentUrl: { type: String, default: '' },
+      certificateNumber: { type: String, default: '', trim: true },
+    },
 
     // pricing
     rentType: { type: String, enum: Object.values(RENT_TYPE), default: RENT_TYPE.SEASON },

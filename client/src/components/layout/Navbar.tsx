@@ -106,6 +106,9 @@ export function Navbar() {
                   <NavLink to="/bookings" className={navBtnFlex}>
                     Bookings <Badge count={bookingCount} tone="forest" />
                   </NavLink>
+                  <NavLink to="/lease-history" className={navBtn}>
+                    Lease History
+                  </NavLink>
                 </>
               )}
             </>
@@ -121,6 +124,9 @@ export function Navbar() {
               </NavLink>
               <NavLink to="/seller/bookings" className={navBtn}>
                 Bookings
+              </NavLink>
+              <NavLink to="/seller/lease-history" className={navBtn}>
+                Lease History
               </NavLink>
             </>
           )}
