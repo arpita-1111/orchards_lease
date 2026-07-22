@@ -10,6 +10,8 @@ router.use(requireAuth, restrictTo(ROLES.SELLER, ROLES.ADMIN));
 router.get('/overview', seller.getOverview);
 router.get('/revenue', seller.getRevenue);
 router.get('/performance', seller.getPerformance);
+router.get('/reviews', seller.getSellerReviews);
 router.get('/export/bookings', seller.exportBookingsCsv);
 
 export default router;
+

@@ -21,8 +21,10 @@ import {
   listQuestionsQuerySchema,
   createQuestionSchema,
 } from '../validators/question.validator.js';
+import { createReviewSchema } from '../validators/review.validator.js';
 
 const router = Router();
+
 
 /* ----------------------------- Public ------------------------------ */
 /**
@@ -73,6 +75,10 @@ router.get('/:slug/related', validate({ params: slugParam }), orchard.getRelated
 
 /* ------------------------ Nested reviews --------------------------- */
 router.get('/:orchardId/reviews', review.listOrchardReviews);
+router.get('/:id/reviews', validate({ params: idParam }), review.listOrchardReviews);
+router.post('/:id/reviews', requireAuth, restrictTo(ROLES.RENTER), validate({ params: idParam, ...createReviewSchema }), review.createReview);
+router.get('/:id/reviewable-booking', requireAuth, validate({ params: idParam }), review.getReviewableBooking);
+
 
 /* ------------------------ Health Score ----------------------------- */
 router.get('/:id/health-score', optionalAuth, validate({ params: idParam }), health.getHealthScore);
