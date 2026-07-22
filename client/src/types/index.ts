@@ -118,9 +118,44 @@ export interface Orchard {
   healthScore?: HealthScoreData;
   harvestSeasons?: HarvestSeason[];
 
+  availabilityDates?: { startDate: string; endDate: string; note?: string }[];
+  blockedDates?: BlockedDate[];
+
   seo?: { metaTitle?: string; metaDescription?: string; keywords?: string[] };
   createdAt: string;
   updatedAt: string;
+}
+
+export type BlockedDateReason = 'Maintenance' | 'Harvest' | 'Personal' | 'System';
+
+export interface BlockedDate {
+  _id?: string;
+  startDate: string;
+  endDate: string;
+  reason: BlockedDateReason;
+  note?: string;
+  blockedBy?: string;
+}
+
+export interface BookedDate {
+  _id: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+}
+
+export interface OrchardAvailabilityResponse {
+  orchardId: string;
+  gardenName: string;
+  available: boolean;
+  availabilityDates: { startDate: string; endDate: string; note?: string }[];
+  blockedDates: BlockedDate[];
+  bookedDates: BookedDate[];
+  maintenancePeriods: BlockedDate[];
+  harvestPeriods: BlockedDate[];
+  personalPeriods?: BlockedDate[];
+  systemPeriods?: BlockedDate[];
+  harvestSeasons?: HarvestSeason[];
 }
 
 export type BookingStatus =

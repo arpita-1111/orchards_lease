@@ -180,6 +180,7 @@ export const approveBooking = asyncHandler(async (req, res) => {
       blockedDates: {
         startDate: booking.startDate,
         endDate: booking.endDate,
+        reason: 'System',
         note: `Lease Approved (Booking ID: ${booking._id})`,
       },
     },
@@ -237,6 +238,15 @@ export const cancelBooking = asyncHandler(async (req, res) => {
   booking.cancellationReason = req.body.reason || '';
   booking.addTimeline(BOOKING_STATUS.CANCELLED, req.body.reason || 'Cancelled by renter', req.user._id);
   await booking.save();
+
+  // Remove corresponding System block on Orchard availability calendar if present
+  await Orchard.findByIdAndUpdate(booking.orchardId, {
+    $pull: {
+      blockedDates: {
+        note: `Lease Approved (Booking ID: ${booking._id})`,
+      },
+    },
+  });
 
   await notify({
     user: booking.sellerId,

@@ -33,6 +33,26 @@ const dateRangeSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const blockedDateSchema = new mongoose.Schema(
+  {
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true },
+    reason: {
+      type: String,
+      enum: ['Maintenance', 'Harvest', 'Personal', 'System'],
+      default: 'Personal',
+    },
+    note: { type: String, default: '' },
+    blockedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+  },
+  { _id: true }
+);
+
+
 // Structured Water Source Schema (Issue #43)
 const waterSourcesSchema = new mongoose.Schema(
   {
@@ -118,7 +138,7 @@ const orchardSchema = new mongoose.Schema(
 
     // availability management (Issue #23)
     availabilityDates: { type: [dateRangeSchema], default: [] },
-    blockedDates: { type: [dateRangeSchema], default: [] },
+    blockedDates: { type: [blockedDateSchema], default: [] },
 
     // marketplace state
     available: { type: Boolean, default: true, index: true },
