@@ -8,6 +8,7 @@ import Orchard from '../models/Orchard.js';
 import Wishlist from '../models/Wishlist.js';
 import Setting from '../models/Setting.js';
 import { uploadMany } from '../services/upload.service.js';
+import { notifyFollowersOfOrchard } from '../services/follow.service.js';
 
 const EDITABLE_FIELDS = [
   'gardenName', 'description', 'district', 'state', 'country', 'latitude', 'longitude',
@@ -47,6 +48,7 @@ const buildPublicFilter = (q = {}) => {
   if (q.district) filter.district = new RegExp(q.district.trim(), 'i');
   if (q.available !== undefined) filter.available  = q.available;
   if (q.featured  !== undefined) filter.isFeatured = q.featured;
+  if (q.sellerId) filter.sellerId = q.sellerId;
 
   // Rent type: "season" | "month" | "year" | "harvest"
   if (q.rentType) filter.rentType = q.rentType;
@@ -264,6 +266,9 @@ export const createOrchard = asyncHandler(async (req, res) => {
   }
 
   const orchard = await Orchard.create(data);
+  if (orchard.status === ORCHARD_STATUS.PUBLISHED) {
+    notifyFollowersOfOrchard({ sellerId: req.user._id, orchard, isNew: true });
+  }
   return created(res, orchard, 'Orchard created');
 });
 
@@ -283,6 +288,11 @@ export const updateOrchard = asyncHandler(async (req, res) => {
   Object.assign(orchard, updates);
   if (!orchard.thumbnail && orchard.images?.length) orchard.thumbnail = orchard.images[0].url;
   await orchard.save();
+
+  if (orchard.status === ORCHARD_STATUS.PUBLISHED) {
+    notifyFollowersOfOrchard({ sellerId: orchard.sellerId, orchard, isNew: false });
+  }
+
   return ok(res, orchard, 'Orchard updated');
 });
 
@@ -340,6 +350,11 @@ export const setOrchardStatus = (targetStatus) =>
     }
 
     await orchard.save();
+
+    if (orchard.status === ORCHARD_STATUS.PUBLISHED) {
+      notifyFollowersOfOrchard({ sellerId: orchard.sellerId, orchard, isNew: true });
+    }
+
     return ok(res, orchard, `Orchard ${targetStatus} done`);
   });
 

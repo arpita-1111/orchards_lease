@@ -109,6 +109,9 @@ export function Navbar() {
                   <NavLink to="/lease-history" className={navBtn}>
                     Lease History
                   </NavLink>
+                  <NavLink to="/following" className={navBtn}>
+                    Following
+                  </NavLink>
                 </>
               )}
             </>

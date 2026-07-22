@@ -24,6 +24,7 @@ export interface OrchardFilters {
   harvestThisMonth?: boolean;
   upcomingHarvest?: boolean;
   peakSeason?: boolean;
+  sellerId?: string;
 }
 
 const cleanParams = (f: object) =>

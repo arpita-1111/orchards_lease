@@ -28,6 +28,7 @@ import {
 } from '../services/analytics.service.js';
 import { recordAudit } from '../services/audit.service.js';
 import { notify } from '../services/notification.service.js';
+import { notifyFollowersOfOrchard } from '../services/follow.service.js';
 import { invalidateMaintenanceCache } from '../middleware/maintenance.middleware.js';
 import { revokeAllSessions } from '../services/token.service.js';
 
@@ -285,6 +286,10 @@ export const moderateOrchard = asyncHandler(async (req, res) => {
       link: '/seller/orchards',
       email: true,
     });
+
+    if (action === 'approve') {
+      await notifyFollowersOfOrchard({ sellerId: orchard.sellerId, orchard, isNew: true });
+    }
   }
 
   return ok(res, orchard, `Orchard ${action} done`);

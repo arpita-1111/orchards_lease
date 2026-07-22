@@ -11,6 +11,8 @@ import WishlistPage from '@/pages/renter/WishlistPage';
 import ComparePage from '@/pages/renter/ComparePage';
 import BookingsPage from '@/pages/renter/BookingsPage';
 import LeaseHistoryPage from '@/pages/renter/LeaseHistoryPage';
+import FollowingPage from '@/pages/renter/FollowingPage';
+import SellerProfilePage from '@/pages/SellerProfilePage';
 
 import AuthPage from '@/pages/auth/AuthPage';
 import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage';
@@ -46,6 +48,7 @@ export default function App() {
         <Route index element={<ExplorePage />} />
         <Route path="explore" element={<ExplorePage />} />
         <Route path="orchards/:slug" element={<OrchardDetailPage />} />
+        <Route path="sellers/:sellerId" element={<SellerProfilePage />} />
 
         {/* Renter Specific Dashboard Routes */}
         <Route
@@ -77,6 +80,14 @@ export default function App() {
           element={
             <ProtectedRoute roles={['renter']}>
               <LeaseHistoryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="following"
+          element={
+            <ProtectedRoute roles={['renter']}>
+              <FollowingPage />
             </ProtectedRoute>
           }
         />
