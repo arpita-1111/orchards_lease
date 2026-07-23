@@ -111,7 +111,6 @@ export interface Orchard {
   seo?: { metaTitle?: string; metaDescription?: string; keywords?: string[] };
   createdAt: string;
   updatedAt: string;
-  organicCertification?: OrganicCertification;
 }
 
 export type BookingStatus =

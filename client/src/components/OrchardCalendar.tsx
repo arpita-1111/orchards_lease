@@ -11,7 +11,7 @@ interface OrchardCalendarProps {
   isOwner?: boolean;
 }
 
-export const OrchardCalendar: React.FC<OrchardCalendarProps> = ({ orchardId, isOwner = false }) => {
+export const OrchardCalendar: React.FC<OrchardCalendarProps> = ({ orchardId, isOwner: _isOwner = false }) => {
   const [availabilityDates, setAvailabilityDates] = useState<DateRange[]>([]);
   const [blockedDates, setBlockedDates] = useState<DateRange[]>([]);
   const [loading, setLoading] = useState(true);

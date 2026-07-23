@@ -15,15 +15,19 @@ import {
   Fuel,         // For Petrol Pumps
   Activity,     // For Hospitals
   ShoppingBag,  // For Agricultural Stores
+  Navigation,
+  ExternalLink,
+  Compass,
   Sprout,       // For Organic Badge
   FileText,     // For Certificate Document
-  ExternalLink  // For Document Link
 } from 'lucide-react';
 import { orchardService } from '@/services/orchard.service';
 import { bookingService } from '@/services/booking.service';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useMarketplace } from '@/context/MarketplaceContext';
+import { useLocation } from '@/context/LocationContext';
+import { getOrchardCoordinates } from '@/lib/distance';
 import { Button, EmptyState, Badge } from '@/components/ui';
 import { BookingModal } from '@/components/orchard/BookingModal';
 import { OrchardCard as OrchardMini } from '@/components/orchard/OrchardCard';
@@ -34,6 +38,9 @@ import { orchardSurface } from '@/lib/gradients';
 import { getErrorMessage } from '@/lib/apiClient';
 import { cn } from '@/lib/cn';
 import type { Orchard, Review } from '@/types';
+import { OrchardCalendar } from '@/components/OrchardCalendar';
+import OrchardHistoryEditor from '@/components/orchard/OrchardHistoryEditor';
+<OrchardCalendar orchardId="{orchard._id}"/>
 
 export default function OrchardDetailPage() {
   const { slug = '' } = useParams();
@@ -41,6 +48,7 @@ export default function OrchardDetailPage() {
   const { user } = useAuth();
   const toast = useToast();
   const { isSaved, isCompared, toggleSave, toggleCompare, refreshBookingCount } = useMarketplace();
+  const { userLocation, getDistanceTo, requestLocation } = useLocation();
 
   const [orchard, setOrchard] = useState<Orchard | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -400,6 +408,68 @@ export default function OrchardDetailPage() {
               </div>
             </>
           )}
+
+          {/* Distance & Geolocation Block */}
+          {(() => {
+            const distInfo = getDistanceTo(orchard);
+            const coords = getOrchardCoordinates(orchard);
+            const mapsUrl = coords
+              ? `https://www.google.com/maps/dir/?api=1&destination=${coords.lat},${coords.lng}`
+              : '#';
+
+            return (
+              <>
+                <h2 className="mb-3.5 font-serif text-[19px] font-semibold">Location &amp; Distance</h2>
+                <div className="mb-7 rounded-xl border border-sand bg-cream p-4">
+                  {distInfo ? (
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                      <div className="flex items-center gap-3.5">
+                        <div className="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-forest text-cream">
+                          <Navigation className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <div className="flex items-baseline gap-2">
+                            <span className="font-serif text-lg font-bold text-forest">{distInfo.formattedDistance} straight-line</span>
+                            <span className="text-xs font-semibold text-sub">({distInfo.formattedRoadDistance} road trip)</span>
+                          </div>
+                          <div className="text-xs text-faint">
+                            Estimated travel time: <strong className="text-ink">{distInfo.formattedTravelTime}</strong> from {userLocation?.name || 'your location'}
+                          </div>
+                        </div>
+                      </div>
+                      <a
+                        href={mapsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-forest px-4 py-2.5 text-xs font-bold text-cream hover:bg-forest-dark transition-colors"
+                      >
+                        <Compass className="h-4 w-4" /> Get Directions <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-bold text-ink flex items-center gap-1.5">
+                          <MapPin className="h-4 w-4 text-forest" />
+                          {orchard.district}, {orchard.state}
+                        </div>
+                        <div className="text-xs text-faint mt-0.5">
+                          Enable your browser location to calculate exact travel distance &amp; time.
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={requestLocation}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-forest bg-avail px-4 py-2 text-xs font-bold text-forest hover:bg-forest hover:text-cream transition-colors"
+                      >
+                        <Navigation className="h-3.5 w-3.5" /> Enable Location
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            );
+          })()}
 
           {/* New Nearby Infrastructure Section */}
           <h2 className="mb-3.5 font-serif text-[19px] font-semibold">Nearby Facilities</h2>
