@@ -6,11 +6,13 @@ import { cn } from '@/lib/cn';
 import { DistanceBadge } from './DistanceBadge';
 import type { Orchard } from '@/types';
 import { HarvestBadge } from './HarvestTimeline';
+import { FollowerBadge } from '../follow/FollowerBadge';
 
 interface OrchardCardProps {
   orchard: Orchard;
   isSaved?: boolean;
   isCompared?: boolean;
+  isFollowingSeller?: boolean;
   onToggleSave?: (id: string) => void;
   onToggleCompare?: (id: string) => void;
 }
@@ -19,6 +21,7 @@ export function OrchardCard({
   orchard,
   isSaved,
   isCompared,
+  isFollowingSeller,
   onToggleSave,
   onToggleCompare,
 }: OrchardCardProps) {
@@ -36,6 +39,7 @@ export function OrchardCard({
 
         {/* badges */}
         <div className="absolute left-3 top-3 flex gap-1.5 flex-wrap">
+          {isFollowingSeller && <FollowerBadge size="sm" />}
           <HarvestBadge harvestSeasons={orchard.harvestSeasons} />
           <span
             className={cn(

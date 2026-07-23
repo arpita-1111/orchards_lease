@@ -69,10 +69,19 @@ handler with leak-safe production output.
 | Bookings | `POST /bookings`, `/bookings/:id/approve|reject|cancel|complete` |
 | Reviews  | `POST /reviews`, `GET /orchards/:orchardId/reviews` |
 | Wishlist | `GET /wishlist`, `/wishlist/:orchardId/toggle`, `/wishlist/compare` |
+| Follow   | `POST /follow/:sellerId`, `DELETE /follow/:sellerId`, `GET /following`, `GET /followers/:sellerId`, `GET /following/orchards` |
 | Weather  | `GET /weather/:orchardId` (retrieve normalized current + 7-day forecast) |
 | Seller   | `GET /seller/overview|revenue|performance`, `/seller/export/bookings` |
 | Admin    | `GET /admin/dashboard|analytics`, `/admin/users`, `/admin/orchards/queue`, `/admin/audit-logs`, `/admin/settings` |
 | Meta     | `GET /meta/filters`, `/meta/featured`, `/meta/settings` |
+
+## Favorite Seller & Follow System
+
+Supports renter-to-seller social following and real-time listing notifications:
+- **Follow Rules**: Only renters can follow sellers. Sellers cannot follow other users or self-follow.
+- **Model**: `Follow` schema with compound unique index on `{ follower, seller }`.
+- **Notifications**: Automatic in-app notification dispatch to seller followers whenever a followed seller publishes a new orchard or updates listing details.
+- **Dashboard**: Renter Following page (`/following`) lists followed sellers, follower count, total orchards, latest listing quick view, and profile links.
 
 ## Weather Insights
 

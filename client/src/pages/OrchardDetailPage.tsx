@@ -40,10 +40,9 @@ import { formatCurrency, formatDate, titleCase } from '@/lib/format';
 import { orchardSurface } from '@/lib/gradients';
 import { getErrorMessage } from '@/lib/apiClient';
 import { cn } from '@/lib/cn';
-import type { Orchard, Review } from '@/types';
-import { OrchardCalendar } from '@/components/OrchardCalendar';
-import OrchardHistoryEditor from '@/components/orchard/OrchardHistoryEditor';
-<OrchardCalendar orchardId="{orchard._id}"/>
+import { followService } from '@/services/follow.service';
+import { FollowButton } from '@/components/follow/FollowButton';
+import type { Orchard, Review, SellerFollowStats } from '@/types';
 
 export default function OrchardDetailPage() {
   const { slug = '' } = useParams();
@@ -55,6 +54,7 @@ export default function OrchardDetailPage() {
 
   const [orchard, setOrchard] = useState<Orchard | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [sellerStats, setSellerStats] = useState<SellerFollowStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [bookingOpen, setBookingOpen] = useState(false);
@@ -79,6 +79,10 @@ export default function OrchardDetailPage() {
         setOrchard(o);
         setGalleryIndex(0);
         orchardService.getReviews(o._id).then((r) => setReviews(r.data)).catch(() => {});
+        const sId = typeof o.sellerId === 'object' ? o.sellerId?._id : (o.sellerId as string);
+        if (sId) {
+          followService.getSellerFollowersStats(sId).then(setSellerStats).catch(() => {});
+        }
       })
       .catch(() => setOrchard(null))
       .finally(() => setLoading(false));
@@ -579,21 +583,48 @@ export default function OrchardDetailPage() {
             </p>
 
             {seller && (
-              <div className="mt-[18px] flex items-center gap-2.5 border-t border-chip pt-[18px]">
-                <span className="flex h-[42px] w-[42px] items-center justify-center rounded-full bg-forest-light text-sm font-bold text-cream">
-                  {seller.avatar ? (
-                    <img src={seller.avatar} alt="" className="h-[42px] w-[42px] rounded-full object-cover" />
-                  ) : (
-                    seller.name?.slice(0, 2).toUpperCase()
-                  )}
-                </span>
-                <div className="flex-1">
-                  <div className="flex items-center gap-1.5 text-sm font-bold">
-                    {seller.name}
-                    <BadgeCheck className="h-3.5 w-3.5 text-forest" />
+              <div className="mt-[18px] border-t border-chip pt-[18px] space-y-3">
+                <div className="flex items-center gap-2.5">
+                  <span
+                    onClick={() => navigate(`/sellers/${seller._id}`)}
+                    className="flex h-[42px] w-[42px] flex-none items-center justify-center rounded-full bg-forest-light text-sm font-bold text-cream cursor-pointer hover:opacity-90 transition-opacity"
+                  >
+                    {seller.avatar ? (
+                      <img src={seller.avatar} alt="" className="h-[42px] w-[42px] rounded-full object-cover" />
+                    ) : (
+                      seller.name?.slice(0, 2).toUpperCase()
+                    )}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div
+                      onClick={() => navigate(`/sellers/${seller._id}`)}
+                      className="flex items-center gap-1.5 text-sm font-bold text-ink hover:text-forest transition-colors cursor-pointer truncate"
+                    >
+                      <span>{seller.name}</span>
+                      <BadgeCheck className="h-3.5 w-3.5 text-forest flex-none" />
+                    </div>
+                    <div className="text-xs text-faint truncate">
+                      {sellerStats ? `${sellerStats.followerCount} followers` : `Member since ${formatDate(seller.createdAt)}`}
+                    </div>
                   </div>
-                  <div className="text-xs text-faint">Member since {formatDate(seller.createdAt)}</div>
                 </div>
+
+                <FollowButton
+                  sellerId={seller._id || ''}
+                  sellerName={seller.name}
+                  isFollowing={sellerStats?.isFollowing || false}
+                  followerCount={sellerStats?.followerCount}
+                  onFollowChange={(isFollowing, newCount) => {
+                    setSellerStats((prev) =>
+                      prev
+                        ? { ...prev, isFollowing, followerCount: newCount !== undefined ? newCount : prev.followerCount }
+                        : null
+                    );
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                />
               </div>
             )}
           </div>

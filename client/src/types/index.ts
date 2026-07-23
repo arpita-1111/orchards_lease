@@ -179,6 +179,36 @@ export interface AppNotification {
   createdAt: string;
 }
 
+export interface FollowedSeller {
+  _id: string;
+  seller: {
+    _id: string;
+    name: string;
+    email?: string;
+    avatar?: string;
+    bio?: string;
+    createdAt?: string;
+  };
+  followerCount: number;
+  orchardCount: number;
+  latestOrchard?: Orchard | null;
+  createdAt: string;
+}
+
+export interface SellerFollowStats {
+  sellerId: string;
+  seller?: {
+    _id: string;
+    name: string;
+    avatar?: string;
+    bio?: string;
+    createdAt?: string;
+  };
+  followerCount: number;
+  orchardCount: number;
+  isFollowing: boolean;
+}
+
 export interface PageMeta {
   page: number;
   limit: number;
