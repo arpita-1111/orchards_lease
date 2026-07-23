@@ -15,34 +15,66 @@ import {
   Fuel,         // For Petrol Pumps
   Activity,     // For Hospitals
   ShoppingBag,  // For Agricultural Stores
+  Navigation,
+  ExternalLink,
+  Compass,
   Sprout,       // For Organic Badge
   FileText,     // For Certificate Document
-  ExternalLink  // For Document Link
 } from 'lucide-react';
 import { orchardService } from '@/services/orchard.service';
 import { bookingService } from '@/services/booking.service';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useMarketplace } from '@/context/MarketplaceContext';
+import { useLocation } from '@/context/LocationContext';
+import { getOrchardCoordinates } from '@/lib/distance';
 import { Button, EmptyState, Badge } from '@/components/ui';
 import { BookingModal } from '@/components/orchard/BookingModal';
-import { OrchardCard as OrchardMini } from '@/components/orchard/OrchardCard';
+import { OrchardQA } from '@/components/orchard/OrchardQA';
+import { AvailabilityCalendar } from '@/components/orchard/AvailabilityCalendar';
 import { OrchardMap } from '@/components/orchard/OrchardMap';
+import { WeatherCard } from '@/components/orchard/WeatherCard';
+import { OrchardHealthScore } from '@/components/orchard/OrchardHealthScore';
+import { HarvestTimeline } from '@/components/orchard/HarvestTimeline';
 import { formatCurrency, formatDate, titleCase } from '@/lib/format';
 import { orchardSurface } from '@/lib/gradients';
 import { getErrorMessage } from '@/lib/apiClient';
 import { cn } from '@/lib/cn';
-import type { Orchard, Review } from '@/types';
+import { followService } from '@/services/follow.service';
+import { FollowButton } from '@/components/follow/FollowButton';
+import { reviewService } from '@/services/review.service';
+import { recommendationService } from '@/services/recommendation.service';
+import { RatingBreakdown } from '@/components/orchard/RatingBreakdown';
+import { ReviewList } from '@/components/orchard/ReviewList';
+import { WriteReviewModal } from '@/components/orchard/WriteReviewModal';
+import { RecommendedSection } from '@/components/recommendation/RecommendedSection';
+import type { Orchard, Review, ReviewSummary, PageMeta, Booking, SellerFollowStats, RecommendationItem } from '@/types';
+
+
 
 export default function OrchardDetailPage() {
+
   const { slug = '' } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const toast = useToast();
   const { isSaved, isCompared, toggleSave, toggleCompare, refreshBookingCount } = useMarketplace();
+  const { userLocation, getDistanceTo, requestLocation } = useLocation();
 
   const [orchard, setOrchard] = useState<Orchard | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewSummary, setReviewSummary] = useState<ReviewSummary | null>(null);
+  const [reviewMeta, setReviewMeta] = useState<PageMeta | undefined>(undefined);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewSort, setReviewSort] = useState<'newest' | 'highest' | 'lowest'>('newest');
+  const [reviewPage, setReviewPage] = useState(1);
+
+  const [reviewableBooking, setReviewableBooking] = useState<Booking | null>(null);
+  const [canReview, setCanReview] = useState(false);
+  const [writeReviewOpen, setWriteReviewOpen] = useState(false);
+  const [editingReview, setEditingReview] = useState<Review | null>(null);
+
+  const [sellerStats, setSellerStats] = useState<SellerFollowStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [bookingOpen, setBookingOpen] = useState(false);
@@ -58,6 +90,52 @@ export default function OrchardDetailPage() {
     pomegranate: 'September - February (Winter Harvest)'
   };
 
+  const loadReviews = (orchardId: string, page = 1, sort: 'newest' | 'highest' | 'lowest' = 'newest') => {
+    setReviewsLoading(true);
+    reviewService
+      .getOrchardReviews(orchardId, page, 5, sort)
+      .then((res) => {
+        setReviews(res.reviews);
+        if (res.summary) setReviewSummary(res.summary);
+        if (res.meta) setReviewMeta(res.meta);
+      })
+      .catch(() => {})
+      .finally(() => setReviewsLoading(false));
+  };
+
+  const checkReviewableBooking = (orchardId: string) => {
+    if (!user || user.role !== 'renter') {
+      setCanReview(false);
+      setReviewableBooking(null);
+      return;
+    }
+    reviewService
+      .getReviewableBooking(orchardId)
+      .then((res) => {
+        setCanReview(res.canReview);
+        setReviewableBooking(res.booking);
+      })
+      .catch(() => {
+        setCanReview(false);
+        setReviewableBooking(null);
+      });
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!window.confirm('Are you sure you want to delete your review?')) return;
+    try {
+      await reviewService.deleteReview(reviewId);
+      toast.success('Review deleted');
+      if (orchard) {
+        loadReviews(orchard._id, reviewPage, reviewSort);
+        checkReviewableBooking(orchard._id);
+        orchardService.getBySlug(slug).then(setOrchard).catch(() => {});
+      }
+    } catch {
+      toast.error('Failed to delete review');
+    }
+  };
+
   useEffect(() => {
     setLoading(true);
     window.scrollTo(0, 0);
@@ -66,11 +144,17 @@ export default function OrchardDetailPage() {
       .then((o) => {
         setOrchard(o);
         setGalleryIndex(0);
-        orchardService.getReviews(o._id).then((r) => setReviews(r.data)).catch(() => {});
+        loadReviews(o._id, 1, 'newest');
+        checkReviewableBooking(o._id);
+        const sId = typeof o.sellerId === 'object' ? o.sellerId?._id : (o.sellerId as string);
+        if (sId) {
+          followService.getSellerFollowersStats(sId).then(setSellerStats).catch(() => {});
+        }
       })
       .catch(() => setOrchard(null))
       .finally(() => setLoading(false));
-  }, [slug]);
+  }, [slug, user]);
+
 
   const requestBooking = () => {
     if (!user) {
@@ -302,7 +386,21 @@ export default function OrchardDetailPage() {
               </div>
             ))}
           </div>
+
+          {/* Orchard Availability Calendar Component (Issue #68) */}
+          <div className="mb-8">
+            <AvailabilityCalendar orchardId={orchard._id} />
+          </div>
+
+          <div className="mb-7">
+            <HarvestTimeline harvestSeasons={orchard.harvestSeasons} />
+          </div>
           
+          {/* Health Score Dashboard Card (Issue #72) */}
+          <div className="mb-8">
+            <OrchardHealthScore orchardId={orchard._id} />
+          </div>
+
           {/* Interactive Map Component Section (Issue #33) */}
           <h2 className="mb-3.5 font-serif text-[19px] font-semibold">Interactive Location Map</h2>
           <div className="mb-8">
@@ -378,6 +476,12 @@ export default function OrchardDetailPage() {
             )}
           </div>
 
+          {/* Weather Insights Section (Issue #74) */}
+          <h2 className="mb-3.5 font-serif text-[19px] font-semibold">Weather Insights</h2>
+          <div className="mb-8">
+            <WeatherCard orchardId={orchard._id} />
+          </div>
+
           {orchard.amenities.length > 0 && (
             <>
               <h2 className="mb-3.5 font-serif text-[19px] font-semibold">Amenities &amp; infrastructure</h2>
@@ -393,6 +497,68 @@ export default function OrchardDetailPage() {
               </div>
             </>
           )}
+
+          {/* Distance & Geolocation Block */}
+          {(() => {
+            const distInfo = getDistanceTo(orchard);
+            const coords = getOrchardCoordinates(orchard);
+            const mapsUrl = coords
+              ? `https://www.google.com/maps/dir/?api=1&destination=${coords.lat},${coords.lng}`
+              : '#';
+
+            return (
+              <>
+                <h2 className="mb-3.5 font-serif text-[19px] font-semibold">Location &amp; Distance</h2>
+                <div className="mb-7 rounded-xl border border-sand bg-cream p-4">
+                  {distInfo ? (
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                      <div className="flex items-center gap-3.5">
+                        <div className="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-forest text-cream">
+                          <Navigation className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <div className="flex items-baseline gap-2">
+                            <span className="font-serif text-lg font-bold text-forest">{distInfo.formattedDistance} straight-line</span>
+                            <span className="text-xs font-semibold text-sub">({distInfo.formattedRoadDistance} road trip)</span>
+                          </div>
+                          <div className="text-xs text-faint">
+                            Estimated travel time: <strong className="text-ink">{distInfo.formattedTravelTime}</strong> from {userLocation?.name || 'your location'}
+                          </div>
+                        </div>
+                      </div>
+                      <a
+                        href={mapsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-forest px-4 py-2.5 text-xs font-bold text-cream hover:bg-forest-dark transition-colors"
+                      >
+                        <Compass className="h-4 w-4" /> Get Directions <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-bold text-ink flex items-center gap-1.5">
+                          <MapPin className="h-4 w-4 text-forest" />
+                          {orchard.district}, {orchard.state}
+                        </div>
+                        <div className="text-xs text-faint mt-0.5">
+                          Enable your browser location to calculate exact travel distance &amp; time.
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={requestLocation}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-forest bg-avail px-4 py-2 text-xs font-bold text-forest hover:bg-forest hover:text-cream transition-colors"
+                      >
+                        <Navigation className="h-3.5 w-3.5" /> Enable Location
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            );
+          })()}
 
           {/* New Nearby Infrastructure Section */}
           <h2 className="mb-3.5 font-serif text-[19px] font-semibold">Nearby Facilities</h2>
@@ -420,27 +586,61 @@ export default function OrchardDetailPage() {
             })}
           </div>
 
-          <h2 className="mb-3.5 font-serif text-[19px] font-semibold">Reviews</h2>
-          {reviews.length === 0 ? (
-            <p className="text-sm text-faint">No reviews yet.</p>
-          ) : (
-            <div className="flex flex-col gap-3.5">
-              {reviews.map((r) => (
-                <div key={r._id} className="rounded-xl border border-sand bg-cream px-[18px] py-4">
-                  <div className="mb-2.5 flex items-center gap-2.5">
-                    <span className="flex h-[38px] w-[38px] items-center justify-center rounded-full bg-forest text-[13px] font-bold text-cream">
-                      {r.renterId?.name?.slice(0, 2).toUpperCase()}
-                    </span>
-                    <div>
-                      <div className="text-sm font-bold">{r.renterId?.name}</div>
-                      <div className="text-xs text-faint">{formatDate(r.createdAt)}</div>
-                    </div>
-                  </div>
-                  <p className="text-sm leading-[1.55] text-[#3a4632]">{r.comment}</p>
-                </div>
-              ))}
+          {/* Orchard Ratings & Reviews System */}
+          <div className="mb-10 mt-10 border-t border-sand pt-8">
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+              <div>
+                <h2 className="font-serif text-[21px] font-semibold text-ink">Ratings &amp; Reviews</h2>
+                <p className="text-xs text-sub mt-0.5">Verified renter feedback and category assessments</p>
+              </div>
+              {canReview && (
+                <Button
+                  onClick={() => {
+                    setEditingReview(null);
+                    setWriteReviewOpen(true);
+                  }}
+                  className="flex items-center gap-1.5"
+                >
+                  <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                  Write a Review
+                </Button>
+              )}
             </div>
-          )}
+
+            {reviewSummary && reviewSummary.ratingCount > 0 && (
+              <div className="mb-6">
+                <RatingBreakdown summary={reviewSummary} />
+              </div>
+            )}
+
+            <ReviewList
+              reviews={reviews}
+              meta={reviewMeta}
+              loading={reviewsLoading}
+              sort={reviewSort}
+              onSortChange={(s) => {
+                setReviewSort(s);
+                if (orchard) loadReviews(orchard._id, 1, s);
+              }}
+              onPageChange={(p) => {
+                setReviewPage(p);
+                if (orchard) loadReviews(orchard._id, p, reviewSort);
+              }}
+              onEditReview={(r) => {
+                setEditingReview(r);
+                setWriteReviewOpen(true);
+              }}
+              onDeleteReview={handleDeleteReview}
+            />
+          </div>
+
+
+          {/* Q&A Section */}
+          <h2 className="mb-3.5 font-serif text-[19px] font-semibold mt-10">Questions &amp; Answers</h2>
+          <OrchardQA 
+            orchardId={orchard._id} 
+            sellerId={typeof orchard.sellerId === 'object' && orchard.sellerId ? (orchard.sellerId._id || '') : (orchard.sellerId as string)} 
+          />
         </div>
 
         {/* Right booking card */}
@@ -483,21 +683,48 @@ export default function OrchardDetailPage() {
             </p>
 
             {seller && (
-              <div className="mt-[18px] flex items-center gap-2.5 border-t border-chip pt-[18px]">
-                <span className="flex h-[42px] w-[42px] items-center justify-center rounded-full bg-forest-light text-sm font-bold text-cream">
-                  {seller.avatar ? (
-                    <img src={seller.avatar} alt="" className="h-[42px] w-[42px] rounded-full object-cover" />
-                  ) : (
-                    seller.name?.slice(0, 2).toUpperCase()
-                  )}
-                </span>
-                <div className="flex-1">
-                  <div className="flex items-center gap-1.5 text-sm font-bold">
-                    {seller.name}
-                    <BadgeCheck className="h-3.5 w-3.5 text-forest" />
+              <div className="mt-[18px] border-t border-chip pt-[18px] space-y-3">
+                <div className="flex items-center gap-2.5">
+                  <span
+                    onClick={() => navigate(`/sellers/${seller._id}`)}
+                    className="flex h-[42px] w-[42px] flex-none items-center justify-center rounded-full bg-forest-light text-sm font-bold text-cream cursor-pointer hover:opacity-90 transition-opacity"
+                  >
+                    {seller.avatar ? (
+                      <img src={seller.avatar} alt="" className="h-[42px] w-[42px] rounded-full object-cover" />
+                    ) : (
+                      seller.name?.slice(0, 2).toUpperCase()
+                    )}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div
+                      onClick={() => navigate(`/sellers/${seller._id}`)}
+                      className="flex items-center gap-1.5 text-sm font-bold text-ink hover:text-forest transition-colors cursor-pointer truncate"
+                    >
+                      <span>{seller.name}</span>
+                      <BadgeCheck className="h-3.5 w-3.5 text-forest flex-none" />
+                    </div>
+                    <div className="text-xs text-faint truncate">
+                      {sellerStats ? `${sellerStats.followerCount} followers` : `Member since ${formatDate(seller.createdAt)}`}
+                    </div>
                   </div>
-                  <div className="text-xs text-faint">Member since {formatDate(seller.createdAt)}</div>
                 </div>
+
+                <FollowButton
+                  sellerId={seller._id || ''}
+                  sellerName={seller.name}
+                  isFollowing={sellerStats?.isFollowing || false}
+                  followerCount={sellerStats?.followerCount}
+                  onFollowChange={(isFollowing, newCount) => {
+                    setSellerStats((prev) =>
+                      prev
+                        ? { ...prev, isFollowing, followerCount: newCount !== undefined ? newCount : prev.followerCount }
+                        : null
+                    );
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                />
               </div>
             )}
           </div>
@@ -513,8 +740,29 @@ export default function OrchardDetailPage() {
         />
       )}
 
-      {/* Related */}
-      <RelatedOrchards slug={slug} />
+      {writeReviewOpen && orchard && (
+        <WriteReviewModal
+          orchardId={orchard._id}
+          gardenName={orchard.gardenName}
+          booking={reviewableBooking}
+          existingReview={editingReview}
+          onClose={() => {
+            setWriteReviewOpen(false);
+            setEditingReview(null);
+          }}
+          onSuccess={() => {
+            if (orchard) {
+              loadReviews(orchard._id, 1, reviewSort);
+              checkReviewableBooking(orchard._id);
+              orchardService.getBySlug(slug).then(setOrchard).catch(() => {});
+            }
+          }}
+        />
+      )}
+
+
+      {/* You May Also Like / Similar Orchards */}
+      {orchard && <SimilarOrchardsSection orchardId={orchard._id} />}
     </main>
   );
 }
@@ -528,33 +776,40 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-function RelatedOrchards({ slug }: { slug: string }) {
-  const [related, setRelated] = useState<Orchard[]>([]);
-  const { isSaved, isCompared, toggleSave, toggleCompare } = useMarketplace();
+function SimilarOrchardsSection({ orchardId }: { orchardId: string }) {
+  const [similar, setSimilar] = useState<RecommendationItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchSimilar = () => {
+    setLoading(true);
+    recommendationService
+      .getSimilar(orchardId, 4)
+      .then((res) => setSimilar(res.recommendations))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  };
 
   useEffect(() => {
-    orchardService.getRelated(slug).then(setRelated).catch(() => {});
-  }, [slug]);
+    if (orchardId) fetchSimilar();
+  }, [orchardId]);
 
-  if (related.length === 0) return null;
+  if (!loading && similar.length === 0) return null;
+
   return (
-    <section className="mt-14">
-      <h2 className="mb-5 font-serif text-xl font-semibold">Related orchards</h2>
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {related.slice(0, 4).map((o) => (
-          <OrchardMini
-            key={o._id}
-            orchard={o}
-            isSaved={isSaved(o._id)}
-            isCompared={isCompared(o._id)}
-            onToggleSave={toggleSave}
-            onToggleCompare={toggleCompare}
-          />
-        ))}
-      </div>
-    </section>
+    <div className="mt-14 border-t border-sand pt-8">
+      <RecommendedSection
+        title="You May Also Like — Similar Orchards"
+        subtitle="Orchards matching similar fruit varieties, region, price range, and guest ratings."
+        items={similar}
+        isLoading={loading}
+        onRetry={fetchSimilar}
+        maxItems={4}
+        badgeText="Smart Similar Match"
+      />
+    </div>
   );
 }
+
 
 function DetailSkeleton() {
   return (

@@ -1,5 +1,6 @@
 import apiClient from '@/lib/apiClient';
 import type { ApiResponse, Booking } from '@/types';
+import { generateLeaseAgreementPDF } from '@/lib/leaseAgreement';
 
 export const bookingService = {
   list: async (params?: { role?: string; status?: string; page?: number }) => {
@@ -26,6 +27,11 @@ export const bookingService = {
   async get(id: string) {
     const { data } = await apiClient.get<ApiResponse<Booking>>(`/bookings/${id}`);
     return data.data;
+  },
+
+  async downloadAgreement(id: string) {
+    const booking = await this.get(id);
+    generateLeaseAgreementPDF(booking);
   },
 
   create: async (data: { orchardId: string; startDate: string; endDate: string; message?: string }) => {

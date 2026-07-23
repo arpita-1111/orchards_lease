@@ -17,6 +17,22 @@ const pricingRuleSchema = z.object({
   multiplier: z.number().min(0).optional().default(1),
 });
 
+const treatmentSchema = z.object({
+  date: z.coerce.date(),
+  method: z.string().optional().default(''),
+  chemicals: z.array(z.string()).optional().default([]),
+  notes: z.string().optional().default(''),
+});
+
+const historyEntrySchema = z.object({
+  incidentDate: z.coerce.date(),
+  season: z.string().optional().default(''),
+  items: z.array(z.string()).optional().default([]),
+  severity: z.string().optional().default(''),
+  description: z.string().optional().default(''),
+  treatments: z.array(treatmentSchema).optional().default([]),
+});
+
 const baseOrchard = {
   gardenName: z.string().min(3, 'Garden name is too short').max(120),
   description: z.string().max(5000).optional().default(''),
@@ -33,12 +49,20 @@ const baseOrchard = {
   estimatedHarvestDate: z.coerce.date().optional(),
   totalArea: z.number().min(0).optional().default(0),
   areaUnit: z.nativeEnum(AREA_UNIT).optional().default(AREA_UNIT.ACRE),
+  soilFertility: z.enum(['High', 'Medium', 'Low', 'Unknown']).optional().default('Unknown'),
+  waterSourceQuality: z.enum(['High', 'Medium', 'Low', 'Unknown']).optional().default('Unknown'),
+  pestHistory: z.enum(['Low', 'Medium', 'High', 'Unknown']).optional().default('Unknown'),
+  diseaseHistory: z.enum(['Low', 'Medium', 'High', 'Unknown']).optional().default('Unknown'),
+  maintenanceStatus: z.enum(['Good', 'Average', 'Poor', 'Unknown']).optional().default('Unknown'),
+  orchardAge: z.number().int().min(0).optional().default(0),
   rentType: z.nativeEnum(RENT_TYPE).optional().default(RENT_TYPE.SEASON),
   price: z.number().min(0, 'Price must be positive'),
   pricingRules: z.array(pricingRuleSchema).optional().default([]),
   images: z.array(imageSchema).optional().default([]),
   thumbnail: z.string().url().optional().or(z.literal('')),
   amenities: z.array(z.string()).optional().default([]),
+  pestHistory: z.array(historyEntrySchema).optional().default([]),
+  diseaseHistory: z.array(historyEntrySchema).optional().default([]),
   available: z.boolean().optional().default(true),
   seo: z
     .object({
@@ -49,9 +73,132 @@ const baseOrchard = {
     .optional(),
 };
 
+export const harvestSeasonSchema = z.object({
+  fruitName: z.string().min(1, 'Fruit name is required').trim(),
+  startMonth: z.number().int().min(1).max(12),
+  peakStartMonth: z.number().int().min(1).max(12),
+  peakEndMonth: z.number().int().min(1).max(12),
+  endMonth: z.number().int().min(1).max(12),
+});
+
+export const updateHarvestSchema = {
+  body: z.object({
+    harvestSeasons: z
+      .array(harvestSeasonSchema)
+      .refine(
+        (seasons) => {
+          const names = seasons.map((s) => s.fruitName.trim().toLowerCase());
+          return names.length === new Set(names).size;
+        },
+        { message: 'Duplicate fruits are not allowed in harvest schedule' }
+      )
+      .refine(
+        (seasons) => {
+          const inRange = (m, start, end) => {
+            if (start <= end) {
+              return m >= start && m <= end;
+            } else {
+              return m >= start || m <= end;
+            }
+          };
+
+          for (const season of seasons) {
+            const { startMonth, peakStartMonth, peakEndMonth, endMonth } = season;
+
+            // Check if peakStartMonth is in harvest season
+            if (!inRange(peakStartMonth, startMonth, endMonth)) {
+              return false;
+            }
+            // Check if peakEndMonth is in harvest season
+            if (!inRange(peakEndMonth, startMonth, endMonth)) {
+              return false;
+            }
+
+            // Check all months in peak range to ensure they are inside harvest season
+            const peakMonths = [];
+            let current = peakStartMonth;
+            let iterations = 0;
+            while (iterations < 12) {
+              peakMonths.push(current);
+              if (current === peakEndMonth) break;
+              current = (current % 12) + 1;
+              iterations++;
+            }
+
+            for (const pm of peakMonths) {
+              if (!inRange(pm, startMonth, endMonth)) {
+                return false;
+              }
+            }
+          }
+          return true;
+        },
+        { message: 'Peak harvest months must fall within the overall harvest season range' }
+      ),
+  }),
+};
+
+export const patchHarvestSchema = {
+  body: z.object({
+    harvestSeasons: z
+      .array(harvestSeasonSchema)
+      .optional()
+      .refine(
+        (seasons) => {
+          if (!seasons) return true;
+          const names = seasons.map((s) => s.fruitName.trim().toLowerCase());
+          return names.length === new Set(names).size;
+        },
+        { message: 'Duplicate fruits are not allowed in harvest schedule' }
+      )
+      .refine(
+        (seasons) => {
+          if (!seasons) return true;
+          const inRange = (m, start, end) => {
+            if (start <= end) {
+              return m >= start && m <= end;
+            } else {
+              return m >= start || m <= end;
+            }
+          };
+
+          for (const season of seasons) {
+            const { startMonth, peakStartMonth, peakEndMonth, endMonth } = season;
+
+            if (!inRange(peakStartMonth, startMonth, endMonth)) {
+              return false;
+            }
+            if (!inRange(peakEndMonth, startMonth, endMonth)) {
+              return false;
+            }
+
+            const peakMonths = [];
+            let current = peakStartMonth;
+            let iterations = 0;
+            while (iterations < 12) {
+              peakMonths.push(current);
+              if (current === peakEndMonth) break;
+              current = (current % 12) + 1;
+              iterations++;
+            }
+
+            for (const pm of peakMonths) {
+              if (!inRange(pm, startMonth, endMonth)) {
+                return false;
+              }
+            }
+          }
+          return true;
+        },
+        { message: 'Peak harvest months must fall within the overall harvest season range' }
+      ),
+  }),
+};
+
 export const createOrchardSchema = {
   body: z.object({
     ...baseOrchard,
+    harvestSeasons: z.array(harvestSeasonSchema).optional(),
     status: z
       .enum([ORCHARD_STATUS.DRAFT, ORCHARD_STATUS.PENDING])
       .optional()
@@ -60,7 +207,10 @@ export const createOrchardSchema = {
 };
 
 export const updateOrchardSchema = {
-  body: z.object(baseOrchard).partial(),
+  body: z.object({
+    ...baseOrchard,
+    harvestSeasons: z.array(harvestSeasonSchema).optional(),
+  }).partial(),
 };
 
 export const orchardQuerySchema = {
@@ -92,8 +242,21 @@ export const orchardQuerySchema = {
       .enum(['true', 'false'])
       .optional()
       .transform((v) => (v === undefined ? undefined : v === 'true')),
+    harvestThisMonth: z
+      .enum(['true', 'false'])
+      .optional()
+      .transform((v) => (v === undefined ? undefined : v === 'true')),
+    upcomingHarvest: z
+      .enum(['true', 'false'])
+      .optional()
+      .transform((v) => (v === undefined ? undefined : v === 'true')),
+    peakSeason: z
+      .enum(['true', 'false'])
+      .optional()
+      .transform((v) => (v === undefined ? undefined : v === 'true')),
   }),
 };
+
 
 export const moderateOrchardSchema = {
   body: z.object({

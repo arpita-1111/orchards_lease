@@ -108,10 +108,54 @@ export interface Orchard {
 
   organicCertification?: OrganicCertification;
 
+  // Health fields (Issue #72)
+  soilFertility?: 'High' | 'Medium' | 'Low' | 'Unknown';
+  waterSourceQuality?: 'High' | 'Medium' | 'Low' | 'Unknown';
+  pestHistory?: 'Low' | 'Medium' | 'High' | 'Unknown';
+  diseaseHistory?: 'Low' | 'Medium' | 'High' | 'Unknown';
+  maintenanceStatus?: 'Good' | 'Average' | 'Poor' | 'Unknown';
+  orchardAge?: number;
+  healthScore?: HealthScoreData;
+  harvestSeasons?: HarvestSeason[];
+
+  availabilityDates?: { startDate: string; endDate: string; note?: string }[];
+  blockedDates?: BlockedDate[];
+
   seo?: { metaTitle?: string; metaDescription?: string; keywords?: string[] };
   createdAt: string;
   updatedAt: string;
-  organicCertification?: OrganicCertification;
+}
+
+export type BlockedDateReason = 'Maintenance' | 'Harvest' | 'Personal' | 'System';
+
+export interface BlockedDate {
+  _id?: string;
+  startDate: string;
+  endDate: string;
+  reason: BlockedDateReason;
+  note?: string;
+  blockedBy?: string;
+}
+
+export interface BookedDate {
+  _id: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+}
+
+export interface OrchardAvailabilityResponse {
+  orchardId: string;
+  gardenName: string;
+  available: boolean;
+  availabilityDates: { startDate: string; endDate: string; note?: string }[];
+  blockedDates: BlockedDate[];
+  bookedDates: BookedDate[];
+  maintenancePeriods: BlockedDate[];
+  harvestPeriods: BlockedDate[];
+  personalPeriods?: BlockedDate[];
+  systemPeriods?: BlockedDate[];
+  harvestSeasons?: HarvestSeason[];
 }
 
 export type BookingStatus =
@@ -151,14 +195,45 @@ export interface Booking {
   createdAt: string;
 }
 
+export interface CategoryRatings {
+  cleanliness: number;
+  maintenance: number;
+  accessibility: number;
+  communication: number;
+}
+
+export interface ReviewSummary {
+  ratingAverage: number;
+  ratingCount: number;
+  categoryAverages: CategoryRatings;
+  distribution: {
+    5: number;
+    4: number;
+    3: number;
+    2: number;
+    1: number;
+  };
+}
+
 export interface Review {
   _id: string;
-  orchardId: string;
-  renterId: Pick<User, '_id' | 'name' | 'avatar'>;
+  orchardId: string | { _id: string; gardenName: string; slug: string };
+  bookingId?: string;
+  renterId: Pick<User, '_id' | 'name' | 'avatar' | 'email'>;
+  sellerId?: string | Pick<User, '_id' | 'name' | 'email'>;
   rating: number;
+  cleanlinessRating?: number;
+  maintenanceRating?: number;
+  accessibilityRating?: number;
+  communicationRating?: number;
   comment: string;
+  status?: 'pending' | 'approved' | 'rejected';
+  isReported?: boolean;
+  isHidden?: boolean;
   createdAt: string;
+  updatedAt?: string;
 }
+
 
 export interface AppNotification {
   _id: string;
@@ -168,6 +243,36 @@ export interface AppNotification {
   link?: string;
   isRead: boolean;
   createdAt: string;
+}
+
+export interface FollowedSeller {
+  _id: string;
+  seller: {
+    _id: string;
+    name: string;
+    email?: string;
+    avatar?: string;
+    bio?: string;
+    createdAt?: string;
+  };
+  followerCount: number;
+  orchardCount: number;
+  latestOrchard?: Orchard | null;
+  createdAt: string;
+}
+
+export interface SellerFollowStats {
+  sellerId: string;
+  seller?: {
+    _id: string;
+    name: string;
+    avatar?: string;
+    bio?: string;
+    createdAt?: string;
+  };
+  followerCount: number;
+  orchardCount: number;
+  isFollowing: boolean;
 }
 
 export interface PageMeta {
@@ -201,3 +306,106 @@ export interface FilterOptions {
   priceRange: { min: number; max: number };
   treeRange:  { min: number; max: number };
 }
+
+export interface WeatherCurrent {
+  temperature: number;
+  feelsLike: number;
+  humidity: number;
+  windSpeed: number;
+  rainChance: number;
+  condition: string;
+  icon: string;
+  sunrise: string;
+  sunset: string;
+}
+
+export interface WeatherForecastDay {
+  date: string;
+  tempMax: number;
+  tempMin: number;
+  condition: string;
+  icon: string;
+  rainChance: number;
+}
+
+export interface WeatherData {
+  current: WeatherCurrent;
+  forecast: WeatherForecastDay[];
+  alerts: string[];
+}
+
+export interface Question {
+  _id: string;
+  orchard: string | { _id: string; gardenName: string; slug: string };
+  askedBy: { _id: string; name: string; avatar?: string; email?: string };
+  question: string;
+  answer?: string;
+  answeredBy?: { _id: string; name: string; avatar?: string; email?: string } | null;
+  isOfficialAnswer?: boolean;
+  status: 'active' | 'reported' | 'hidden';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface HealthScoreBreakdown {
+  soil: number;
+  irrigation: number;
+  maintenance: number;
+  production: number;
+  certification: number;
+  pestHistory: number;
+  diseaseHistory?: number;
+  waterSource?: number;
+  orchardAge?: number;
+}
+
+export interface HealthScoreData {
+  score: number;
+  rating: 'Excellent' | 'Good' | 'Fair' | 'Needs Improvement';
+  breakdown: HealthScoreBreakdown;
+  updatedAt?: string;
+}
+
+export interface HarvestSeason {
+  fruitName: string;
+  startMonth: number;
+  peakStartMonth: number;
+  peakEndMonth: number;
+  endMonth: number;
+}
+
+export interface HarvestInfo {
+  harvestSeasons?: HarvestSeason[];
+  fruits: {
+    fruitName: string;
+    startMonth: number;
+    peakStart: number;
+    peakEnd: number;
+    endMonth: number;
+  }[];
+  currentStatus?: string;
+  badge?: string | null;
+  nextHarvest: {
+    fruitName: string;
+    startMonth: number;
+    startMonthName?: string;
+    monthsUntil: number;
+    description?: string;
+  } | null;
+  isCurrentlyHarvesting: boolean;
+}
+
+export interface RecommendationItem {
+  orchard: Orchard;
+  score: number;
+  reasons: string[];
+}
+
+export interface RecommendationResponse {
+  recommendations: RecommendationItem[];
+}
+
+
+
+
+

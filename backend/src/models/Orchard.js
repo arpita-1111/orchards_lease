@@ -4,6 +4,7 @@ import {
   RENT_TYPE,
   AREA_UNIT,
 } from '../utils/constants.js';
+import { calculateHealthScore } from '../services/healthScore.service.js';
 
 const imageSchema = new mongoose.Schema(
   {
@@ -31,6 +32,26 @@ const dateRangeSchema = new mongoose.Schema(
   },
   { _id: false }
 );
+
+const blockedDateSchema = new mongoose.Schema(
+  {
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true },
+    reason: {
+      type: String,
+      enum: ['Maintenance', 'Harvest', 'Personal', 'System'],
+      default: 'Personal',
+    },
+    note: { type: String, default: '' },
+    blockedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+  },
+  { _id: true }
+);
+
 
 // Structured Water Source Schema (Issue #43)
 const waterSourcesSchema = new mongoose.Schema(
@@ -117,7 +138,7 @@ const orchardSchema = new mongoose.Schema(
 
     // availability management (Issue #23)
     availabilityDates: { type: [dateRangeSchema], default: [] },
-    blockedDates: { type: [dateRangeSchema], default: [] },
+    blockedDates: { type: [blockedDateSchema], default: [] },
 
     // marketplace state
     available: { type: Boolean, default: true, index: true },
@@ -146,6 +167,68 @@ const orchardSchema = new mongoose.Schema(
     publishedAt: { type: Date },
     archivedAt: { type: Date },
     deletedAt: { type: Date, default: null },
+
+    // Health Score Fields (Issue #72)
+    soilFertility: {
+      type: String,
+      enum: ['High', 'Medium', 'Low', 'Unknown'],
+      default: 'Unknown',
+    },
+    waterSourceQuality: {
+      type: String,
+      enum: ['High', 'Medium', 'Low', 'Unknown'],
+      default: 'Unknown',
+    },
+    pestHistory: {
+      type: String,
+      enum: ['Low', 'Medium', 'High', 'Unknown'],
+      default: 'Unknown',
+    },
+    diseaseHistory: {
+      type: String,
+      enum: ['Low', 'Medium', 'High', 'Unknown'],
+      default: 'Unknown',
+    },
+    maintenanceStatus: {
+      type: String,
+      enum: ['Good', 'Average', 'Poor', 'Unknown'],
+      default: 'Unknown',
+    },
+    orchardAge: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    healthScore: {
+      score: { type: Number, default: 0, min: 0, max: 100 },
+      rating: { type: String, default: 'Needs Improvement' },
+      breakdown: {
+        soil: { type: Number, default: 0 },
+        irrigation: { type: Number, default: 0 },
+        maintenance: { type: Number, default: 0 },
+        production: { type: Number, default: 0 },
+        certification: { type: Number, default: 0 },
+        pestHistory: { type: Number, default: 0 },
+        diseaseHistory: { type: Number, default: 0 },
+        waterSource: { type: Number, default: 0 },
+        orchardAge: { type: Number, default: 0 },
+      },
+    },
+    harvestSeasons: {
+      type: [
+        new mongoose.Schema(
+          {
+            fruitName: { type: String, required: true, trim: true },
+            startMonth: { type: Number, required: true, min: 1, max: 12 },
+            peakStartMonth: { type: Number, required: true, min: 1, max: 12 },
+            peakEndMonth: { type: Number, required: true, min: 1, max: 12 },
+            endMonth: { type: Number, required: true, min: 1, max: 12 },
+          },
+          { _id: false }
+        ),
+      ],
+      default: [],
+    },
   },
   {
     timestamps: true,
@@ -170,6 +253,12 @@ orchardSchema.virtual('seller', {
   localField: 'sellerId',
   foreignField: '_id',
   justOne: true,
+});
+
+// Pre-save hook to calculate/cache health score
+orchardSchema.pre('save', function (next) {
+  this.healthScore = calculateHealthScore(this);
+  next();
 });
 
 const Orchard = mongoose.model('Orchard', orchardSchema);

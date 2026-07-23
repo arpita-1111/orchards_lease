@@ -1,5 +1,5 @@
 import api from '@/lib/apiClient';
-import type { ApiResponse, Orchard, Review, FilterOptions } from '@/types';
+import type { ApiResponse, Orchard, Review, FilterOptions, HealthScoreData, HarvestSeason, HarvestInfo, OrchardAvailabilityResponse } from '@/types';
 
 export interface OrchardFilters {
   page?: number;
@@ -21,6 +21,10 @@ export interface OrchardFilters {
   rating?: number;
   available?: boolean;
   featured?: boolean;
+  harvestThisMonth?: boolean;
+  upcomingHarvest?: boolean;
+  peakSeason?: boolean;
+  sellerId?: string;
 }
 
 const cleanParams = (f: object) =>
@@ -38,6 +42,16 @@ export const orchardService = {
 
   async getBySlug(slug: string) {
     const { data } = await api.get<ApiResponse<Orchard>>(`/orchards/${slug}`);
+    return data.data;
+  },
+
+  async getHealthScore(id: string) {
+    const { data } = await api.get<ApiResponse<HealthScoreData>>(`/orchards/${id}/health-score`);
+    return data.data;
+  },
+
+  async getAvailability(id: string) {
+    const { data } = await api.get<ApiResponse<OrchardAvailabilityResponse>>(`/orchards/${id}/availability`);
     return data.data;
   },
 
@@ -101,4 +115,26 @@ export const orchardService = {
     );
     return data.data;
   },
+
+  async getHarvest(id: string) {
+    const { data } = await api.get<ApiResponse<HarvestInfo>>(`/orchards/${id}/harvest`);
+    return data.data;
+  },
+
+  async updateHarvest(id: string, harvestSeasons: HarvestSeason[]) {
+    const { data } = await api.put<ApiResponse<{ orchard: Orchard; harvestData: HarvestInfo }>>(
+      `/orchards/${id}/harvest`,
+      { harvestSeasons }
+    );
+    return data.data;
+  },
+
+  async patchHarvest(id: string, harvestSeasons?: HarvestSeason[]) {
+    const { data } = await api.patch<ApiResponse<{ orchard: Orchard; harvestData: HarvestInfo }>>(
+      `/orchards/${id}/harvest`,
+      { harvestSeasons }
+    );
+    return data.data;
+  },
 };
+

@@ -1,5 +1,5 @@
-import React from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+// @ts-ignore
 import L from 'leaflet';
 import { ExternalLink, Navigation } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
