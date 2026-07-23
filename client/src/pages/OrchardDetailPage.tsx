@@ -42,9 +42,14 @@ import { getErrorMessage } from '@/lib/apiClient';
 import { cn } from '@/lib/cn';
 import { followService } from '@/services/follow.service';
 import { FollowButton } from '@/components/follow/FollowButton';
-import type { Orchard, Review, SellerFollowStats } from '@/types';
+import { reviewService } from '@/services/review.service';
+import { RatingBreakdown } from '@/components/orchard/RatingBreakdown';
+import { ReviewList } from '@/components/orchard/ReviewList';
+import { WriteReviewModal } from '@/components/orchard/WriteReviewModal';
+import type { Orchard, Review, ReviewSummary, PageMeta, Booking, SellerFollowStats } from '@/types';
 
 export default function OrchardDetailPage() {
+
   const { slug = '' } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -54,6 +59,17 @@ export default function OrchardDetailPage() {
 
   const [orchard, setOrchard] = useState<Orchard | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewSummary, setReviewSummary] = useState<ReviewSummary | null>(null);
+  const [reviewMeta, setReviewMeta] = useState<PageMeta | undefined>(undefined);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewSort, setReviewSort] = useState<'newest' | 'highest' | 'lowest'>('newest');
+  const [reviewPage, setReviewPage] = useState(1);
+
+  const [reviewableBooking, setReviewableBooking] = useState<Booking | null>(null);
+  const [canReview, setCanReview] = useState(false);
+  const [writeReviewOpen, setWriteReviewOpen] = useState(false);
+  const [editingReview, setEditingReview] = useState<Review | null>(null);
+
   const [sellerStats, setSellerStats] = useState<SellerFollowStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [galleryIndex, setGalleryIndex] = useState(0);
@@ -70,6 +86,52 @@ export default function OrchardDetailPage() {
     pomegranate: 'September - February (Winter Harvest)'
   };
 
+  const loadReviews = (orchardId: string, page = 1, sort: 'newest' | 'highest' | 'lowest' = 'newest') => {
+    setReviewsLoading(true);
+    reviewService
+      .getOrchardReviews(orchardId, page, 5, sort)
+      .then((res) => {
+        setReviews(res.reviews);
+        if (res.summary) setReviewSummary(res.summary);
+        if (res.meta) setReviewMeta(res.meta);
+      })
+      .catch(() => {})
+      .finally(() => setReviewsLoading(false));
+  };
+
+  const checkReviewableBooking = (orchardId: string) => {
+    if (!user || user.role !== 'renter') {
+      setCanReview(false);
+      setReviewableBooking(null);
+      return;
+    }
+    reviewService
+      .getReviewableBooking(orchardId)
+      .then((res) => {
+        setCanReview(res.canReview);
+        setReviewableBooking(res.booking);
+      })
+      .catch(() => {
+        setCanReview(false);
+        setReviewableBooking(null);
+      });
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!window.confirm('Are you sure you want to delete your review?')) return;
+    try {
+      await reviewService.deleteReview(reviewId);
+      toast.success('Review deleted');
+      if (orchard) {
+        loadReviews(orchard._id, reviewPage, reviewSort);
+        checkReviewableBooking(orchard._id);
+        orchardService.getBySlug(slug).then(setOrchard).catch(() => {});
+      }
+    } catch {
+      toast.error('Failed to delete review');
+    }
+  };
+
   useEffect(() => {
     setLoading(true);
     window.scrollTo(0, 0);
@@ -78,7 +140,8 @@ export default function OrchardDetailPage() {
       .then((o) => {
         setOrchard(o);
         setGalleryIndex(0);
-        orchardService.getReviews(o._id).then((r) => setReviews(r.data)).catch(() => {});
+        loadReviews(o._id, 1, 'newest');
+        checkReviewableBooking(o._id);
         const sId = typeof o.sellerId === 'object' ? o.sellerId?._id : (o.sellerId as string);
         if (sId) {
           followService.getSellerFollowersStats(sId).then(setSellerStats).catch(() => {});
@@ -86,7 +149,8 @@ export default function OrchardDetailPage() {
       })
       .catch(() => setOrchard(null))
       .finally(() => setLoading(false));
-  }, [slug]);
+  }, [slug, user]);
+
 
   const requestBooking = () => {
     if (!user) {
@@ -513,27 +577,54 @@ export default function OrchardDetailPage() {
             })}
           </div>
 
-          <h2 className="mb-3.5 font-serif text-[19px] font-semibold">Reviews</h2>
-          {reviews.length === 0 ? (
-            <p className="text-sm text-faint">No reviews yet.</p>
-          ) : (
-            <div className="flex flex-col gap-3.5">
-              {reviews.map((r) => (
-                <div key={r._id} className="rounded-xl border border-sand bg-cream px-[18px] py-4">
-                  <div className="mb-2.5 flex items-center gap-2.5">
-                    <span className="flex h-[38px] w-[38px] items-center justify-center rounded-full bg-forest text-[13px] font-bold text-cream">
-                      {r.renterId?.name?.slice(0, 2).toUpperCase()}
-                    </span>
-                    <div>
-                      <div className="text-sm font-bold">{r.renterId?.name}</div>
-                      <div className="text-xs text-faint">{formatDate(r.createdAt)}</div>
-                    </div>
-                  </div>
-                  <p className="text-sm leading-[1.55] text-[#3a4632]">{r.comment}</p>
-                </div>
-              ))}
+          {/* Orchard Ratings & Reviews System */}
+          <div className="mb-10 mt-10 border-t border-sand pt-8">
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+              <div>
+                <h2 className="font-serif text-[21px] font-semibold text-ink">Ratings &amp; Reviews</h2>
+                <p className="text-xs text-sub mt-0.5">Verified renter feedback and category assessments</p>
+              </div>
+              {canReview && (
+                <Button
+                  onClick={() => {
+                    setEditingReview(null);
+                    setWriteReviewOpen(true);
+                  }}
+                  className="flex items-center gap-1.5"
+                >
+                  <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                  Write a Review
+                </Button>
+              )}
             </div>
-          )}
+
+            {reviewSummary && reviewSummary.ratingCount > 0 && (
+              <div className="mb-6">
+                <RatingBreakdown summary={reviewSummary} />
+              </div>
+            )}
+
+            <ReviewList
+              reviews={reviews}
+              meta={reviewMeta}
+              loading={reviewsLoading}
+              sort={reviewSort}
+              onSortChange={(s) => {
+                setReviewSort(s);
+                if (orchard) loadReviews(orchard._id, 1, s);
+              }}
+              onPageChange={(p) => {
+                setReviewPage(p);
+                if (orchard) loadReviews(orchard._id, p, reviewSort);
+              }}
+              onEditReview={(r) => {
+                setEditingReview(r);
+                setWriteReviewOpen(true);
+              }}
+              onDeleteReview={handleDeleteReview}
+            />
+          </div>
+
 
           {/* Q&A Section */}
           <h2 className="mb-3.5 font-serif text-[19px] font-semibold mt-10">Questions &amp; Answers</h2>
@@ -639,6 +730,27 @@ export default function OrchardDetailPage() {
           onConfirm={confirmBooking}
         />
       )}
+
+      {writeReviewOpen && orchard && (
+        <WriteReviewModal
+          orchardId={orchard._id}
+          gardenName={orchard.gardenName}
+          booking={reviewableBooking}
+          existingReview={editingReview}
+          onClose={() => {
+            setWriteReviewOpen(false);
+            setEditingReview(null);
+          }}
+          onSuccess={() => {
+            if (orchard) {
+              loadReviews(orchard._id, 1, reviewSort);
+              checkReviewableBooking(orchard._id);
+              orchardService.getBySlug(slug).then(setOrchard).catch(() => {});
+            }
+          }}
+        />
+      )}
+
 
       {/* Related */}
       <RelatedOrchards slug={slug} />

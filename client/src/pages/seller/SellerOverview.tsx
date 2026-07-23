@@ -13,7 +13,11 @@ import { Skeleton } from '@/components/ui';
 import { formatCurrency } from '@/lib/format';
 import { initialsOf } from '@/lib/avatar';
 import { getErrorMessage } from '@/lib/apiClient';
-import type { Booking, Orchard, User } from '@/types';
+import { reviewService } from '@/services/review.service';
+import { StarRating } from '@/components/orchard/StarRating';
+import { ReviewCard } from '@/components/orchard/ReviewCard';
+import type { Booking, Orchard, User, Review, ReviewSummary } from '@/types';
+
 
 export default function SellerOverview() {
   const navigate = useNavigate();
@@ -27,6 +31,9 @@ export default function SellerOverview() {
   const [selectedOrchardId, setSelectedOrchardId] = useState<string>('');
   const [weather, setWeather] = useState<any>(null);
   const [weatherLoading, setWeatherLoading] = useState(false);
+
+  const [sellerReviews, setSellerReviews] = useState<Review[]>([]);
+  const [sellerReviewSummary, setSellerReviewSummary] = useState<ReviewSummary | null>(null);
 
   const loadQueue = () =>
     bookingService
@@ -44,6 +51,13 @@ export default function SellerOverview() {
       .finally(() => setLoading(false));
     loadQueue();
 
+    reviewService.getSellerReviews(1, 5)
+      .then((res) => {
+        setSellerReviews(res.reviews);
+        setSellerReviewSummary(res.summary);
+      })
+      .catch(() => {});
+
     orchardService.listMine()
       .then((res) => {
         setMyOrchards(res.data);
@@ -53,6 +67,7 @@ export default function SellerOverview() {
       })
       .catch(() => {});
   }, []);
+
 
   useEffect(() => {
     if (!selectedOrchardId) return;
@@ -326,6 +341,40 @@ export default function SellerOverview() {
           </div>
         )}
       </div>
+
+      {/* Seller Rating & Review Overview Section */}
+      <div className="mt-6 rounded-[18px] border border-sand bg-cream p-[22px]">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="font-serif text-[18px] font-semibold text-ink">Recent Reviews</h2>
+            <p className="text-xs text-sub mt-0.5">Renter ratings and feedback across your orchards</p>
+          </div>
+          {sellerReviewSummary && sellerReviewSummary.ratingCount > 0 && (
+            <div className="flex items-center gap-2 rounded-xl bg-chip/70 px-3.5 py-1.5 border border-sand/60">
+              <span className="font-serif text-lg font-bold text-ink">
+                {sellerReviewSummary.ratingAverage.toFixed(1)}
+              </span>
+              <StarRating value={sellerReviewSummary.ratingAverage} size="sm" />
+              <span className="text-xs font-semibold text-faint">
+                ({sellerReviewSummary.ratingCount})
+              </span>
+            </div>
+          )}
+        </div>
+
+        {sellerReviews.length === 0 ? (
+          <p className="py-6 text-center text-sm font-semibold text-faint">
+            No reviews received yet for your orchards 🌟
+          </p>
+        ) : (
+          <div className="space-y-3.5">
+            {sellerReviews.map((r) => (
+              <ReviewCard key={r._id} review={r} />
+            ))}
+          </div>
+        )}
+      </div>
     </main>
   );
 }
+

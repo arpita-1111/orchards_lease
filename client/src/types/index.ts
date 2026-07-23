@@ -160,14 +160,45 @@ export interface Booking {
   createdAt: string;
 }
 
+export interface CategoryRatings {
+  cleanliness: number;
+  maintenance: number;
+  accessibility: number;
+  communication: number;
+}
+
+export interface ReviewSummary {
+  ratingAverage: number;
+  ratingCount: number;
+  categoryAverages: CategoryRatings;
+  distribution: {
+    5: number;
+    4: number;
+    3: number;
+    2: number;
+    1: number;
+  };
+}
+
 export interface Review {
   _id: string;
-  orchardId: string;
-  renterId: Pick<User, '_id' | 'name' | 'avatar'>;
+  orchardId: string | { _id: string; gardenName: string; slug: string };
+  bookingId?: string;
+  renterId: Pick<User, '_id' | 'name' | 'avatar' | 'email'>;
+  sellerId?: string | Pick<User, '_id' | 'name' | 'email'>;
   rating: number;
+  cleanlinessRating?: number;
+  maintenanceRating?: number;
+  accessibilityRating?: number;
+  communicationRating?: number;
   comment: string;
+  status?: 'pending' | 'approved' | 'rejected';
+  isReported?: boolean;
+  isHidden?: boolean;
   createdAt: string;
+  updatedAt?: string;
 }
+
 
 export interface AppNotification {
   _id: string;
