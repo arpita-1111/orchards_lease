@@ -69,9 +69,18 @@ handler with leak-safe production output.
 | Bookings | `POST /bookings`, `/bookings/:id/approve|reject|cancel|complete` |
 | Reviews  | `POST /reviews`, `GET /orchards/:orchardId/reviews` |
 | Wishlist | `GET /wishlist`, `/wishlist/:orchardId/toggle`, `/wishlist/compare` |
+| Weather  | `GET /weather/:orchardId` (retrieve normalized current + 7-day forecast) |
 | Seller   | `GET /seller/overview|revenue|performance`, `/seller/export/bookings` |
 | Admin    | `GET /admin/dashboard|analytics`, `/admin/users`, `/admin/orchards/queue`, `/admin/audit-logs`, `/admin/settings` |
 | Meta     | `GET /meta/filters`, `/meta/featured`, `/meta/settings` |
+
+## Weather Insights
+
+A full weather integration supporting:
+- **Provider**: Open-Meteo API is configured as the default weather provider. Provider logic is abstract, allowing alternative providers to be swapped in.
+- **Geocoding Fallback**: If an orchard listing lacks exact coordinates (`latitude`/`longitude`), the backend automatically resolves coordinates from the orchard's address text (`district, state, country`) using Open-Meteo Geocoding Search API.
+- **Caching**: Standard in-memory caching utility stores weather queries (`weather:{lat}:{lon}`) for **30 minutes (TTL)**. Coordinates are rounded to 4 decimal places (approx. 11 meters precision) to normalize cache hits and prevent provider spamming.
+- **Errors**: Gracefully handles network failures, timeouts, unavailable providers, or missing coordinates/addresses.
 
 ## Placeholders to wire later
 - **Cloudinary** — `services/upload.service.js` (returns placeholder URLs today).

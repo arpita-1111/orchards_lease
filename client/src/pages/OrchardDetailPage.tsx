@@ -32,6 +32,7 @@ import { Button, EmptyState, Badge } from '@/components/ui';
 import { BookingModal } from '@/components/orchard/BookingModal';
 import { OrchardCard as OrchardMini } from '@/components/orchard/OrchardCard';
 import { OrchardMap } from '@/components/orchard/OrchardMap';
+import { WeatherCard } from '@/components/orchard/WeatherCard';
 import { formatCurrency, formatDate, titleCase } from '@/lib/format';
 import { orchardSurface } from '@/lib/gradients';
 import { getErrorMessage } from '@/lib/apiClient';
@@ -386,11 +387,10 @@ export default function OrchardDetailPage() {
             )}
           </div>
 
-          {/* Pest & Disease History (read-only) */}
-          <div className="mb-7">
-            <OrchardHistoryEditor value={(orchard as any).pestHistory} readOnly title="Pest history" />
-            <div className="mt-4" />
-            <OrchardHistoryEditor value={(orchard as any).diseaseHistory} readOnly title="Disease history" />
+          {/* Weather Insights Section (Issue #74) */}
+          <h2 className="mb-3.5 font-serif text-[19px] font-semibold">Weather Insights</h2>
+          <div className="mb-8">
+            <WeatherCard orchardId={orchard._id} />
           </div>
 
           {orchard.amenities.length > 0 && (
