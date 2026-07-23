@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Link, NavLink, useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, LogOut, User as UserIcon, ChevronDown } from 'lucide-react';
+import { Search, LogOut, User as UserIcon, ChevronDown, Navigation, Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useMarketplace } from '@/context/MarketplaceContext';
+import { useLocation } from '@/context/LocationContext';
 import { avatarGradient, initialsOf } from '@/lib/avatar';
 import { cn } from '@/lib/cn';
 
@@ -114,6 +115,7 @@ export function Navbar() {
                   </NavLink>
                 </>
               )}
+              <LocationPill />
             </>
           )}
 
@@ -224,3 +226,45 @@ export function Navbar() {
     </header>
   );
 }
+
+function LocationPill() {
+  const { userLocation, status, requestLocation, clearLocation } = useLocation();
+
+  if (userLocation) {
+    return (
+      <div
+        title="Location active — distances calculated automatically"
+        className="flex items-center gap-1.5 rounded-[9px] border border-avail bg-[#f2f7ef] px-2.5 py-1.5 text-[12px] font-bold text-forest"
+      >
+        <Navigation className="h-3.5 w-3.5 fill-forest text-forest" />
+        <span className="max-w-[110px] truncate">{userLocation.name || 'Near Location'}</span>
+        <button
+          type="button"
+          onClick={clearLocation}
+          title="Reset location"
+          className="ml-0.5 text-[10px] text-faint hover:text-terra font-normal"
+        >
+          ×
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={requestLocation}
+      disabled={status === 'locating'}
+      title="Enable location to view distances to orchards"
+      className="flex items-center gap-1.5 rounded-[9px] border border-sand bg-cream px-2.5 py-1.5 text-[12px] font-semibold text-sub hover:border-forest hover:text-forest transition-colors"
+    >
+      {status === 'locating' ? (
+        <Loader2 className="h-3.5 w-3.5 animate-spin text-forest" />
+      ) : (
+        <Navigation className="h-3.5 w-3.5 text-forest" />
+      )}
+      <span>{status === 'locating' ? 'Locating…' : 'Near me'}</span>
+    </button>
+  );
+}
+
