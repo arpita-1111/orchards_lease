@@ -5,6 +5,7 @@ import { orchardSurface } from '@/lib/gradients';
 import { cn } from '@/lib/cn';
 import { DistanceBadge } from './DistanceBadge';
 import type { Orchard } from '@/types';
+import { HarvestBadge } from './HarvestTimeline';
 
 interface OrchardCardProps {
   orchard: Orchard;
@@ -34,7 +35,8 @@ export function OrchardCard({
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[rgba(20,30,15,.42)]" />
 
         {/* badges */}
-        <div className="absolute left-3 top-3 flex gap-1.5">
+        <div className="absolute left-3 top-3 flex gap-1.5 flex-wrap">
+          <HarvestBadge harvestSeasons={orchard.harvestSeasons} />
           <span
             className={cn(
               'rounded-full px-2.5 py-1 text-[11.5px] font-bold tracking-[.02em]',

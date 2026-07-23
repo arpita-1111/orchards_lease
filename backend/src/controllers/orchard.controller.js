@@ -15,7 +15,7 @@ const EDITABLE_FIELDS = [
   'estimatedHarvestDate', 'totalArea', 'areaUnit', 'rentType', 'price', 'pricingRules',
   'images', 'thumbnail', 'amenities', 'available', 'seo',
   'soilFertility', 'waterSourceQuality', 'pestHistory', 'diseaseHistory',
-  'maintenanceStatus', 'orchardAge',
+  'maintenanceStatus', 'orchardAge', 'harvestSeasons',
 ];
 
 const SORT_MAP = {
@@ -33,8 +33,16 @@ const buildPublicFilter = (q = {}) => {
   const filter = { status: ORCHARD_STATUS.PUBLISHED, deletedAt: null };
 
   if (q.search) filter.$text = { $search: q.search };
+  
   const fruits = toArray(q.fruit);
-  if (fruits) filter.fruitTypes = { $in: fruits };
+  if (fruits) {
+    const fruitRegexes = fruits.map((f) => new RegExp(`^${f.trim()}$`, 'i'));
+    filter.$or = [
+      { fruitTypes: { $in: fruits } },
+      { 'harvestSeasons.fruitName': { $in: fruitRegexes } },
+    ];
+  }
+  
   if (q.state)    filter.state    = new RegExp(`^${q.state}$`, 'i');
   if (q.district) filter.district = new RegExp(q.district.trim(), 'i');
   if (q.available !== undefined) filter.available  = q.available;
@@ -42,6 +50,91 @@ const buildPublicFilter = (q = {}) => {
 
   // Rent type: "season" | "month" | "year" | "harvest"
   if (q.rentType) filter.rentType = q.rentType;
+
+  if (q.harvestThisMonth) {
+    const currentMonth = new Date().getMonth() + 1;
+    filter.$expr = {
+      $anyElementTrue: {
+        $map: {
+          input: { $ifNull: ['$harvestSeasons', []] },
+          as: 'season',
+          in: {
+            $or: [
+              {
+                $and: [
+                  { $lte: ['$$season.startMonth', '$$season.endMonth'] },
+                  { $lte: ['$$season.startMonth', currentMonth] },
+                  { $gte: ['$$season.endMonth', currentMonth] },
+                ],
+              },
+              {
+                $and: [
+                  { $gt: ['$$season.startMonth', '$$season.endMonth'] },
+                  {
+                    $or: [
+                      { $lte: ['$$season.startMonth', currentMonth] },
+                      { $gte: ['$$season.endMonth', currentMonth] },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    };
+  }
+
+  if (q.upcomingHarvest) {
+    const currentMonth = new Date().getMonth() + 1;
+    const upcomingMonths = [
+      (currentMonth % 12) + 1,
+      ((currentMonth + 1) % 12) + 1,
+      ((currentMonth + 2) % 12) + 1,
+    ];
+    filter['harvestSeasons.startMonth'] = { $in: upcomingMonths };
+  }
+
+  if (q.peakSeason) {
+    const currentMonth = new Date().getMonth() + 1;
+    const peakExpr = {
+      $anyElementTrue: {
+        $map: {
+          input: { $ifNull: ['$harvestSeasons', []] },
+          as: 'season',
+          in: {
+            $or: [
+              {
+                $and: [
+                  { $lte: ['$$season.peakStartMonth', '$$season.peakEndMonth'] },
+                  { $lte: ['$$season.peakStartMonth', currentMonth] },
+                  { $gte: ['$$season.peakEndMonth', currentMonth] },
+                ],
+              },
+              {
+                $and: [
+                  { $gt: ['$$season.peakStartMonth', '$$season.peakEndMonth'] },
+                  {
+                    $or: [
+                      { $lte: ['$$season.peakStartMonth', currentMonth] },
+                      { $gte: ['$$season.peakEndMonth', currentMonth] },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    };
+
+    if (filter.$expr) {
+      filter.$expr = { $and: [filter.$expr, peakExpr] };
+    } else {
+      filter.$expr = peakExpr;
+    }
+  }
+
 
   // Amenities: comma-separated — orchard must have ALL selected ($all)
   if (q.amenities) {

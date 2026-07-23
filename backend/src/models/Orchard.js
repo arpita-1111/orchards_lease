@@ -219,6 +219,21 @@ const orchardSchema = new mongoose.Schema(
         orchardAge: { type: Number, default: 0 },
       },
     },
+    harvestSeasons: {
+      type: [
+        new mongoose.Schema(
+          {
+            fruitName: { type: String, required: true, trim: true },
+            startMonth: { type: Number, required: true, min: 1, max: 12 },
+            peakStartMonth: { type: Number, required: true, min: 1, max: 12 },
+            peakEndMonth: { type: Number, required: true, min: 1, max: 12 },
+            endMonth: { type: Number, required: true, min: 1, max: 12 },
+          },
+          { _id: false }
+        ),
+      ],
+      default: [],
+    },
   },
   {
     timestamps: true,

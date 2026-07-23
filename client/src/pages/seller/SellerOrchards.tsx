@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, MoreVertical, Copy, EyeOff, Eye, Archive, Trash2 } from 'lucide-react';
+import { Plus, MoreVertical, Copy, EyeOff, Eye, Archive, Trash2, Calendar } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { orchardService } from '@/services/orchard.service';
 import { bookingService } from '@/services/booking.service';
@@ -154,6 +154,7 @@ export default function SellerOrchards() {
                         <Item icon={EyeOff} label="Unpublish" onClick={() => act(() => orchardService.setStatus(o._id, 'unpublish'), 'Unpublished')} />
                       )}
                       <Item icon={Copy} label="Duplicate" onClick={() => act(() => orchardService.clone(o._id), 'Duplicated')} />
+                      <Item icon={Calendar} label="Harvest schedule" onClick={() => navigate(`/seller/orchards/${o._id}/harvest`)} />
                       <Item icon={Archive} label="Archive" onClick={() => act(() => orchardService.setStatus(o._id, 'archive'), 'Archived')} />
                       <Item icon={Trash2} label="Delete" danger onClick={() => act(() => orchardService.remove(o._id), 'Deleted')} />
                     </div>

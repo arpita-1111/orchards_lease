@@ -3,6 +3,7 @@ import * as orchard from '../controllers/orchard.controller.js';
 import * as review from '../controllers/review.controller.js';
 import * as question from '../controllers/question.controller.js';
 import * as health from '../controllers/health.controller.js';
+import * as harvest from '../controllers/harvest.controller.js';
 import { requireAuth, optionalAuth } from '../middleware/auth.middleware.js';
 import { restrictTo } from '../middleware/role.middleware.js';
 import { validate } from '../middleware/validate.middleware.js';
@@ -12,6 +13,8 @@ import {
   createOrchardSchema,
   updateOrchardSchema,
   orchardQuerySchema,
+  updateHarvestSchema,
+  patchHarvestSchema,
 } from '../validators/orchard.validator.js';
 import { idParam, slugParam } from '../validators/common.validator.js';
 import {
@@ -73,6 +76,12 @@ router.get('/:orchardId/reviews', review.listOrchardReviews);
 
 /* ------------------------ Health Score ----------------------------- */
 router.get('/:id/health-score', optionalAuth, validate({ params: idParam }), health.getHealthScore);
+
+/* ------------------------ Harvest Schedule ------------------------- */
+router.get('/:id/harvest', optionalAuth, validate({ params: idParam }), harvest.getHarvestSchedule);
+router.put('/:id/harvest', requireAuth, restrictTo(ROLES.SELLER, ROLES.ADMIN), validate({ params: idParam, ...updateHarvestSchema }), harvest.updateHarvestSchedule);
+router.patch('/:id/harvest', requireAuth, restrictTo(ROLES.SELLER, ROLES.ADMIN), validate({ params: idParam, ...patchHarvestSchema }), harvest.patchHarvestSchedule);
+
 
 /* -------------------------- Nested Q&As ---------------------------- */
 router.get('/:id/questions', optionalAuth, validate({ params: idParam, ...listQuestionsQuerySchema }), question.listOrchardQuestions);

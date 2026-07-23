@@ -116,6 +116,7 @@ export interface Orchard {
   maintenanceStatus?: 'Good' | 'Average' | 'Poor' | 'Unknown';
   orchardAge?: number;
   healthScore?: HealthScoreData;
+  harvestSeasons?: HarvestSeason[];
 
   seo?: { metaTitle?: string; metaDescription?: string; keywords?: string[] };
   createdAt: string;
@@ -268,6 +269,36 @@ export interface HealthScoreData {
   breakdown: HealthScoreBreakdown;
   updatedAt?: string;
 }
+
+export interface HarvestSeason {
+  fruitName: string;
+  startMonth: number;
+  peakStartMonth: number;
+  peakEndMonth: number;
+  endMonth: number;
+}
+
+export interface HarvestInfo {
+  harvestSeasons?: HarvestSeason[];
+  fruits: {
+    fruitName: string;
+    startMonth: number;
+    peakStart: number;
+    peakEnd: number;
+    endMonth: number;
+  }[];
+  currentStatus?: string;
+  badge?: string | null;
+  nextHarvest: {
+    fruitName: string;
+    startMonth: number;
+    startMonthName?: string;
+    monthsUntil: number;
+    description?: string;
+  } | null;
+  isCurrentlyHarvesting: boolean;
+}
+
 
 
 
