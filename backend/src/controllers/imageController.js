@@ -21,4 +21,5 @@ const uploadImage = async (req, res) => {
   }
 };
 
-module.exports = { uploadImage };
+// module.exports = { uploadImage };
+export default uploadImage;
