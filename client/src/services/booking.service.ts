@@ -13,7 +13,7 @@ export const bookingService = {
     page?: number;
     limit?: number;
   }) {
-    const { data } = await api.get<ApiResponse<Booking[]>>('/bookings', {
+    const { data } = await apiClient.get<ApiResponse<Booking[]>>('/bookings', {
       params: {
         ...params,
         statuses: 'completed,cancelled,rejected',
@@ -22,8 +22,9 @@ export const bookingService = {
     });
     return data;
   },
+
   async get(id: string) {
-    const { data } = await api.get<ApiResponse<Booking>>(`/bookings/${id}`);
+    const { data } = await apiClient.get<ApiResponse<Booking>>(`/bookings/${id}`);
     return data.data;
   },
 
@@ -38,8 +39,23 @@ export const bookingService = {
     return res.data.data;
   },
 
-  updateStatus: async (bookingId: string, action: 'approve' | 'reject' | 'cancel', reason?: string) => {
-    const res = await apiClient.patch<ApiResponse<Booking>>(`/bookings/${bookingId}/status`, { action, reason });
+  approve: async (bookingId: string) => {
+    const res = await apiClient.post<ApiResponse<Booking>>(`/bookings/${bookingId}/approve`);
+    return res.data.data;
+  },
+
+  reject: async (bookingId: string, reason?: string) => {
+    const res = await apiClient.post<ApiResponse<Booking>>(`/bookings/${bookingId}/reject`, { reason });
+    return res.data.data;
+  },
+
+  cancel: async (bookingId: string, reason?: string) => {
+    const res = await apiClient.post<ApiResponse<Booking>>(`/bookings/${bookingId}/cancel`, { reason });
+    return res.data.data;
+  },
+
+  complete: async (bookingId: string) => {
+    const res = await apiClient.post<ApiResponse<Booking>>(`/bookings/${bookingId}/complete`);
     return res.data.data;
   },
 };

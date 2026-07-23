@@ -9,7 +9,7 @@ import notificationRoutes from './notification.routes.js';
 import sellerRoutes from './seller.routes.js';
 import adminRoutes from './admin.routes.js';
 import metaRoutes from './meta.routes.js';
-import imageRoutes from './image.routes.js';
+import imageRoutes from './imageRoutes.js';
 import availabilityRoutes from './availability.routes.js';
 
 const router = Router();

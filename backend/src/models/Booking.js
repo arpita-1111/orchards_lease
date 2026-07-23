@@ -5,6 +5,7 @@ const timelineSchema = new mongoose.Schema(
   {
     status: { type: String, required: true },
     note: { type: String, default: '' },
+    by: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     at: { type: Date, default: Date.now },
   },
   { _id: false }
@@ -75,6 +76,10 @@ const bookingSchema = new mongoose.Schema(
 
 bookingSchema.index({ sellerId: 1, bookingStatus: 1 });
 bookingSchema.index({ renterId: 1, bookingStatus: 1 });
+
+bookingSchema.methods.addTimeline = function (status, note, by) {
+  this.timeline.push({ status, note, by });
+};
 
 const Booking = mongoose.model('Booking', bookingSchema);
 export default Booking;
