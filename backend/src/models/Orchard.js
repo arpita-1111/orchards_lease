@@ -33,27 +33,25 @@ const dateRangeSchema = new mongoose.Schema(
   { _id: false }
 );
 
-const treatmentSchema = new mongoose.Schema(
+const blockedDateSchema = new mongoose.Schema(
   {
-    date: { type: Date, required: true },
-    method: { type: String, default: '' },
-    chemicals: { type: [String], default: [] },
-    notes: { type: String, default: '' },
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true },
+    reason: {
+      type: String,
+      enum: ['Maintenance', 'Harvest', 'Personal', 'System'],
+      default: 'Personal',
+    },
+    note: { type: String, default: '' },
+    blockedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
   },
-  { _id: false }
+  { _id: true }
 );
 
-const historyEntrySchema = new mongoose.Schema(
-  {
-    incidentDate: { type: Date, required: true },
-    season: { type: String, default: '' },
-    items: { type: [String], default: [] }, // pests or diseases
-    severity: { type: String, default: '' },
-    description: { type: String, default: '' },
-    treatments: { type: [treatmentSchema], default: [] },
-  },
-  { _id: false }
-);
 
 // Structured Water Source Schema (Issue #43)
 const waterSourcesSchema = new mongoose.Schema(
@@ -140,10 +138,7 @@ const orchardSchema = new mongoose.Schema(
 
     // availability management (Issue #23)
     availabilityDates: { type: [dateRangeSchema], default: [] },
-    blockedDates: { type: [dateRangeSchema], default: [] },
-    // agricultural history
-    pestHistory: { type: [historyEntrySchema], default: [] },
-    diseaseHistory: { type: [historyEntrySchema], default: [] },
+    blockedDates: { type: [blockedDateSchema], default: [] },
 
     // marketplace state
     available: { type: Boolean, default: true, index: true },

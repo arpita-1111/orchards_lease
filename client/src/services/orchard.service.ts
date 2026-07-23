@@ -1,5 +1,5 @@
 import api from '@/lib/apiClient';
-import type { ApiResponse, Orchard, Review, FilterOptions, HealthScoreData, HarvestSeason, HarvestInfo } from '@/types';
+import type { ApiResponse, Orchard, Review, FilterOptions, HealthScoreData, HarvestSeason, HarvestInfo, OrchardAvailabilityResponse } from '@/types';
 
 export interface OrchardFilters {
   page?: number;
@@ -47,6 +47,11 @@ export const orchardService = {
 
   async getHealthScore(id: string) {
     const { data } = await api.get<ApiResponse<HealthScoreData>>(`/orchards/${id}/health-score`);
+    return data.data;
+  },
+
+  async getAvailability(id: string) {
+    const { data } = await api.get<ApiResponse<OrchardAvailabilityResponse>>(`/orchards/${id}/availability`);
     return data.data;
   },
 

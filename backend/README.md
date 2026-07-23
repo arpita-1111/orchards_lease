@@ -95,6 +95,20 @@ A full weather integration supporting:
 - **Cloudinary** — `services/upload.service.js` (returns placeholder URLs today).
 - **Email** — `services/email.service.js` (logs to console today).
 
+## Orchard Availability Calendar
+
+A complete availability and date management system for renters and sellers:
+- **Available Dates**: View real-time active available windows for orchard leasing.
+- **Booked Dates**: Automatically reflects active requested (`REQUESTED`) and confirmed (`APPROVED`) renter bookings.
+- **Seller Blocked Dates**: Enables sellers to block custom date ranges for `Maintenance`, `Harvest`, `Personal`, or `System` reasons.
+- **Conflict Prevention**: Overlap validation prevents overlapping blocked ranges, double bookings, or booking on blocked dates.
+- **Endpoints**:
+  - `GET /api/v1/orchards/:id/availability` — Retrieve availability grid, booked dates, blocked dates, maintenance and harvest periods (Public).
+  - `POST /api/v1/orchards/:id/block-dates` — Create a blocked date range (Seller/Admin).
+  - `PUT /api/v1/orchards/:id/block-dates/:blockId` — Update a blocked date range (Seller/Admin).
+  - `DELETE /api/v1/orchards/:id/block-dates/:blockId` — Remove a blocked date range (Seller/Admin).
+
 ## Testing
 Architecture is test-ready (`supertest` + `jest` installed). Add specs under
 `src/**/__tests__`; `NODE_ENV=test` disables rate limiting and file logging.
+

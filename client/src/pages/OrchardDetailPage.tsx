@@ -32,6 +32,7 @@ import { Button, EmptyState, Badge } from '@/components/ui';
 import { BookingModal } from '@/components/orchard/BookingModal';
 import { OrchardQA } from '@/components/orchard/OrchardQA';
 import { OrchardCard as OrchardMini } from '@/components/orchard/OrchardCard';
+import { AvailabilityCalendar } from '@/components/orchard/AvailabilityCalendar';
 import { OrchardMap } from '@/components/orchard/OrchardMap';
 import { WeatherCard } from '@/components/orchard/WeatherCard';
 import { OrchardHealthScore } from '@/components/orchard/OrchardHealthScore';
@@ -381,6 +382,11 @@ export default function OrchardDetailPage() {
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Orchard Availability Calendar Component (Issue #68) */}
+          <div className="mb-8">
+            <AvailabilityCalendar orchardId={orchard._id} />
           </div>
 
           <div className="mb-7">
