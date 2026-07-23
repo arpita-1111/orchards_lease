@@ -14,7 +14,8 @@ const EDITABLE_FIELDS = [
   'address', 'fruitTypes', 'totalTrees', 'averageFruitPerTree', 'expectedYield',
   'estimatedHarvestDate', 'totalArea', 'areaUnit', 'rentType', 'price', 'pricingRules',
   'images', 'thumbnail', 'amenities', 'available', 'seo',
-  'pestHistory', 'diseaseHistory',
+  'soilFertility', 'waterSourceQuality', 'pestHistory', 'diseaseHistory',
+  'maintenanceStatus', 'orchardAge',
 ];
 
 const SORT_MAP = {
