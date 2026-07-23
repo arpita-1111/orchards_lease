@@ -17,6 +17,22 @@ const pricingRuleSchema = z.object({
   multiplier: z.number().min(0).optional().default(1),
 });
 
+const treatmentSchema = z.object({
+  date: z.coerce.date(),
+  method: z.string().optional().default(''),
+  chemicals: z.array(z.string()).optional().default([]),
+  notes: z.string().optional().default(''),
+});
+
+const historyEntrySchema = z.object({
+  incidentDate: z.coerce.date(),
+  season: z.string().optional().default(''),
+  items: z.array(z.string()).optional().default([]),
+  severity: z.string().optional().default(''),
+  description: z.string().optional().default(''),
+  treatments: z.array(treatmentSchema).optional().default([]),
+});
+
 const baseOrchard = {
   gardenName: z.string().min(3, 'Garden name is too short').max(120),
   description: z.string().max(5000).optional().default(''),
@@ -45,6 +61,8 @@ const baseOrchard = {
   images: z.array(imageSchema).optional().default([]),
   thumbnail: z.string().url().optional().or(z.literal('')),
   amenities: z.array(z.string()).optional().default([]),
+  pestHistory: z.array(historyEntrySchema).optional().default([]),
+  diseaseHistory: z.array(historyEntrySchema).optional().default([]),
   available: z.boolean().optional().default(true),
   seo: z
     .object({

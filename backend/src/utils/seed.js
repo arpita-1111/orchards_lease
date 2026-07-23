@@ -191,8 +191,6 @@ const run = async () => {
   console.log('Renter login:  renter1@orchardlease.com / Password123');
   console.log('--------------------------------------------------');
 
-  await disconnectDB();
-  await mongoose.connection.close();
   process.exit(0);
 };
 

@@ -3,6 +3,7 @@ import { Heart, MapPin, Star, GitCompareArrows } from 'lucide-react';
 import { formatCurrency, titleCase } from '@/lib/format';
 import { orchardSurface } from '@/lib/gradients';
 import { cn } from '@/lib/cn';
+import { DistanceBadge } from './DistanceBadge';
 import type { Orchard } from '@/types';
 
 interface OrchardCardProps {
@@ -119,10 +120,13 @@ export function OrchardCard({
           )}
         </div>
 
-        <p className="mb-2.5 mt-1 flex items-center gap-1 text-[12.5px] text-faint">
-          <MapPin className="h-3 w-3" />
-          {orchard.district}, {orchard.state}
-        </p>
+        <div className="mb-2.5 mt-1 flex flex-wrap items-center justify-between gap-1 text-[12.5px]">
+          <span className="flex items-center gap-1 text-faint">
+            <MapPin className="h-3 w-3" />
+            {orchard.district}, {orchard.state}
+          </span>
+          <DistanceBadge orchard={orchard} variant="card" />
+        </div>
 
         <div className="mb-3 flex gap-3.5 text-xs text-sub">
           <span>🌳 {orchard.totalTrees} trees</span>
