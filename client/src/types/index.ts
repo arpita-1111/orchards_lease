@@ -111,25 +111,6 @@ export interface Orchard {
   seo?: { metaTitle?: string; metaDescription?: string; keywords?: string[] };
   createdAt: string;
   updatedAt: string;
-  pestHistory?: HistoryEntry[];
-  diseaseHistory?: HistoryEntry[];
-}
-
-export interface Treatment {
-  date: string;
-  method?: string;
-  chemicals?: string[];
-  notes?: string;
-}
-
-export interface HistoryEntry {
-  incidentDate: string;
-  season?: string;
-  items?: string[];
-  severity?: string;
-  description?: string;
-  treatments?: Treatment[];
-  organicCertification?: OrganicCertification;
 }
 
 export type BookingStatus =

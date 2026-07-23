@@ -1,5 +1,6 @@
 import apiClient from '@/lib/apiClient';
 import type { ApiResponse, Booking } from '@/types';
+import { generateLeaseAgreementPDF } from '@/lib/leaseAgreement';
 
 export const bookingService = {
   list: async (params?: { role?: string; status?: string; page?: number }) => {
@@ -13,7 +14,7 @@ export const bookingService = {
     page?: number;
     limit?: number;
   }) {
-    const { data } = await api.get<ApiResponse<Booking[]>>('/bookings', {
+    const { data } = await apiClient.get<ApiResponse<Booking[]>>('/bookings', {
       params: {
         ...params,
         statuses: 'completed,cancelled,rejected',
@@ -22,9 +23,15 @@ export const bookingService = {
     });
     return data;
   },
+
   async get(id: string) {
-    const { data } = await api.get<ApiResponse<Booking>>(`/bookings/${id}`);
+    const { data } = await apiClient.get<ApiResponse<Booking>>(`/bookings/${id}`);
     return data.data;
+  },
+
+  async downloadAgreement(id: string) {
+    const booking = await this.get(id);
+    generateLeaseAgreementPDF(booking);
   },
 
   create: async (data: { orchardId: string; startDate: string; endDate: string; message?: string }) => {
@@ -38,8 +45,12 @@ export const bookingService = {
     return res.data.data;
   },
 
-  updateStatus: async (bookingId: string, action: 'approve' | 'reject' | 'cancel', reason?: string) => {
+  updateStatus: async (bookingId: string, action: 'approve' | 'reject' | 'cancel' | 'complete', reason?: string) => {
     const res = await apiClient.patch<ApiResponse<Booking>>(`/bookings/${bookingId}/status`, { action, reason });
     return res.data.data;
   },
+
+  approve: (id: string) => bookingService.updateStatus(id, 'approve'),
+  reject: (id: string, reason?: string) => bookingService.updateStatus(id, 'reject', reason),
+  complete: (id: string) => bookingService.updateStatus(id, 'complete'),
 };
