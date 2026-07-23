@@ -50,7 +50,29 @@ export const bookingService = {
     return res.data.data;
   },
 
-  approve: (id: string) => bookingService.updateStatus(id, 'approve'),
-  reject: (id: string, reason?: string) => bookingService.updateStatus(id, 'reject', reason),
-  complete: (id: string) => bookingService.updateStatus(id, 'complete'),
+  async approve(id: string) {
+    return this.updateStatus(id, 'approve');
+  },
+
+  async reject(id: string) {
+    return this.updateStatus(id, 'reject');
+  },
+
+  async complete(id: string) {
+    return this.updateStatus(id, 'complete');
+  },
+
+  async downloadAgreement(id: string) {
+    const { jsPDF } = await import('jspdf');
+    const doc = new jsPDF();
+    doc.setFont("Helvetica", "bold");
+    doc.setFontSize(22);
+    doc.text("ORCHARD LEASE AGREEMENT", 20, 30);
+    doc.setFont("Helvetica", "normal");
+    doc.setFontSize(12);
+    doc.text(`Agreement ID: ${id}`, 20, 45);
+    doc.text("This document certifies a lease booking on OrchardLease platform.", 20, 60);
+    doc.text("Terms and conditions apply as per the platform user agreement.", 20, 70);
+    doc.save(`lease_agreement_${id}.pdf`);
+  }
 };

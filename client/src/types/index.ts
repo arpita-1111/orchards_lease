@@ -228,3 +228,17 @@ export interface WeatherData {
   alerts: string[];
 }
 
+export interface Question {
+  _id: string;
+  orchard: string | { _id: string; gardenName: string; slug: string };
+  askedBy: { _id: string; name: string; avatar?: string; email?: string };
+  question: string;
+  answer?: string;
+  answeredBy?: { _id: string; name: string; avatar?: string; email?: string } | null;
+  isOfficialAnswer?: boolean;
+  status: 'active' | 'reported' | 'hidden';
+  createdAt: string;
+  updatedAt: string;
+}
+
+

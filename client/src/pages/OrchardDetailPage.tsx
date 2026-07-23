@@ -30,6 +30,7 @@ import { useLocation } from '@/context/LocationContext';
 import { getOrchardCoordinates } from '@/lib/distance';
 import { Button, EmptyState, Badge } from '@/components/ui';
 import { BookingModal } from '@/components/orchard/BookingModal';
+import { OrchardQA } from '@/components/orchard/OrchardQA';
 import { OrchardCard as OrchardMini } from '@/components/orchard/OrchardCard';
 import { OrchardMap } from '@/components/orchard/OrchardMap';
 import { WeatherCard } from '@/components/orchard/WeatherCard';
@@ -518,6 +519,13 @@ export default function OrchardDetailPage() {
               ))}
             </div>
           )}
+
+          {/* Q&A Section */}
+          <h2 className="mb-3.5 font-serif text-[19px] font-semibold mt-10">Questions &amp; Answers</h2>
+          <OrchardQA 
+            orchardId={orchard._id} 
+            sellerId={typeof orchard.sellerId === 'object' && orchard.sellerId ? (orchard.sellerId._id || '') : (orchard.sellerId as string)} 
+          />
         </div>
 
         {/* Right booking card */}
