@@ -162,3 +162,14 @@ export const DISEASE_HISTORY_SCORES = Object.freeze({
   Unknown: 0,
 });
 
+export const RECOMMENDATION_WEIGHTS = Object.freeze({
+  BOOKING_HISTORY: 30,
+  WISHLIST: 20,
+  PREFERRED_FRUITS: 15,
+  LOCATION: 10,
+  BUDGET: 10,
+  RATINGS: 10,
+  POPULARITY: 5,
+});
+
+

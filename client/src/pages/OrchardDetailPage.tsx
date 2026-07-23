@@ -31,7 +31,6 @@ import { getOrchardCoordinates } from '@/lib/distance';
 import { Button, EmptyState, Badge } from '@/components/ui';
 import { BookingModal } from '@/components/orchard/BookingModal';
 import { OrchardQA } from '@/components/orchard/OrchardQA';
-import { OrchardCard as OrchardMini } from '@/components/orchard/OrchardCard';
 import { AvailabilityCalendar } from '@/components/orchard/AvailabilityCalendar';
 import { OrchardMap } from '@/components/orchard/OrchardMap';
 import { WeatherCard } from '@/components/orchard/WeatherCard';
@@ -44,10 +43,14 @@ import { cn } from '@/lib/cn';
 import { followService } from '@/services/follow.service';
 import { FollowButton } from '@/components/follow/FollowButton';
 import { reviewService } from '@/services/review.service';
+import { recommendationService } from '@/services/recommendation.service';
 import { RatingBreakdown } from '@/components/orchard/RatingBreakdown';
 import { ReviewList } from '@/components/orchard/ReviewList';
 import { WriteReviewModal } from '@/components/orchard/WriteReviewModal';
-import type { Orchard, Review, ReviewSummary, PageMeta, Booking, SellerFollowStats } from '@/types';
+import { RecommendedSection } from '@/components/recommendation/RecommendedSection';
+import type { Orchard, Review, ReviewSummary, PageMeta, Booking, SellerFollowStats, RecommendationItem } from '@/types';
+
+
 
 export default function OrchardDetailPage() {
 
@@ -758,8 +761,8 @@ export default function OrchardDetailPage() {
       )}
 
 
-      {/* Related */}
-      <RelatedOrchards slug={slug} />
+      {/* You May Also Like / Similar Orchards */}
+      {orchard && <SimilarOrchardsSection orchardId={orchard._id} />}
     </main>
   );
 }
@@ -773,33 +776,40 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-function RelatedOrchards({ slug }: { slug: string }) {
-  const [related, setRelated] = useState<Orchard[]>([]);
-  const { isSaved, isCompared, toggleSave, toggleCompare } = useMarketplace();
+function SimilarOrchardsSection({ orchardId }: { orchardId: string }) {
+  const [similar, setSimilar] = useState<RecommendationItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchSimilar = () => {
+    setLoading(true);
+    recommendationService
+      .getSimilar(orchardId, 4)
+      .then((res) => setSimilar(res.recommendations))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  };
 
   useEffect(() => {
-    orchardService.getRelated(slug).then(setRelated).catch(() => {});
-  }, [slug]);
+    if (orchardId) fetchSimilar();
+  }, [orchardId]);
 
-  if (related.length === 0) return null;
+  if (!loading && similar.length === 0) return null;
+
   return (
-    <section className="mt-14">
-      <h2 className="mb-5 font-serif text-xl font-semibold">Related orchards</h2>
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {related.slice(0, 4).map((o) => (
-          <OrchardMini
-            key={o._id}
-            orchard={o}
-            isSaved={isSaved(o._id)}
-            isCompared={isCompared(o._id)}
-            onToggleSave={toggleSave}
-            onToggleCompare={toggleCompare}
-          />
-        ))}
-      </div>
-    </section>
+    <div className="mt-14 border-t border-sand pt-8">
+      <RecommendedSection
+        title="You May Also Like — Similar Orchards"
+        subtitle="Orchards matching similar fruit varieties, region, price range, and guest ratings."
+        items={similar}
+        isLoading={loading}
+        onRetry={fetchSimilar}
+        maxItems={4}
+        badgeText="Smart Similar Match"
+      />
+    </div>
   );
 }
+
 
 function DetailSkeleton() {
   return (

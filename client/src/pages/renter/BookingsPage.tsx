@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { RefreshCw, Calendar, History } from 'lucide-react';
 import { bookingService } from '@/services/booking.service';
+import { recommendationService } from '@/services/recommendation.service';
 import { useToast } from '@/context/ToastContext';
 import { Button, Card, Badge, EmptyState } from '@/components/ui';
 import { RenewalModal } from '@/components/orchard/RenewalModal';
+import { RecommendedSection } from '@/components/recommendation/RecommendedSection';
 import { formatCurrency, formatDate } from '@/lib/format';
 import { getErrorMessage } from '@/lib/apiClient';
-import type { Booking, Orchard } from '@/types';
+import type { Booking, Orchard, RecommendationItem } from '@/types';
 
 export default function BookingsPage() {
   const toast = useToast();
@@ -14,6 +16,9 @@ export default function BookingsPage() {
   const [loading, setLoading] = useState(true);
   const [selectedForRenewal, setSelectedForRenewal] = useState<Booking | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const [recommendations, setRecommendations] = useState<RecommendationItem[]>([]);
+  const [recLoading, setRecLoading] = useState(true);
 
   const fetchBookings = () => {
     setLoading(true);
@@ -24,9 +29,20 @@ export default function BookingsPage() {
       .finally(() => setLoading(false));
   };
 
+  const fetchRecommendations = () => {
+    setRecLoading(true);
+    recommendationService
+      .getPersonalized({ limit: 3 })
+      .then((res) => setRecommendations(res.recommendations))
+      .catch(() => {})
+      .finally(() => setRecLoading(false));
+  };
+
   useEffect(() => {
     fetchBookings();
+    fetchRecommendations();
   }, []);
+
 
   const handleRequestRenewal = async (newEndDate: string, message: string) => {
     if (!selectedForRenewal) return;
@@ -161,6 +177,18 @@ export default function BookingsPage() {
         </div>
       )}
 
+      {/* Smart Personalized Recommendations */}
+      <div className="mt-12 border-t border-sand/80 pt-8">
+        <RecommendedSection
+          title="Personalized Recommendations"
+          subtitle="Explore handpicked orchards based on your active leases, wishlist, and preferred fruit varieties."
+          items={recommendations}
+          isLoading={recLoading}
+          onRetry={fetchRecommendations}
+          maxItems={3}
+        />
+      </div>
+
       {selectedForRenewal && (
         <RenewalModal
           booking={selectedForRenewal}
@@ -172,3 +200,4 @@ export default function BookingsPage() {
     </main>
   );
 }
+

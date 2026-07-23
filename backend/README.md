@@ -69,6 +69,7 @@ handler with leak-safe production output.
 | Bookings | `POST /bookings`, `/bookings/:id/approve|reject|cancel|complete` |
 | Reviews  | `POST /reviews`, `GET /orchards/:orchardId/reviews` |
 | Wishlist | `GET /wishlist`, `/wishlist/:orchardId/toggle`, `/wishlist/compare` |
+| Recommendations | `GET /recommendations` (personalized renter recommendations with match scores & reasons), `GET /recommendations/similar/:orchardId` |
 | Follow   | `POST /follow/:sellerId`, `DELETE /follow/:sellerId`, `GET /following`, `GET /followers/:sellerId`, `GET /following/orchards` |
 | Weather  | `GET /weather/:orchardId` (retrieve normalized current + 7-day forecast) |
 | Seller   | `GET /seller/overview|revenue|performance`, `/seller/export/bookings` |

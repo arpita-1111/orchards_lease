@@ -12,8 +12,10 @@ import {
 } from 'lucide-react';
 import { orchardService, type OrchardFilters } from '@/services/orchard.service';
 import { wishlistService } from '@/services/wishlist.service';
+import { recommendationService } from '@/services/recommendation.service';
 import { OrchardCard, OrchardCardSkeleton } from '@/components/orchard/OrchardCard';
 import { TopRatedSlider } from '@/components/orchard/TopRatedSlider';
+import { RecommendedSection } from '@/components/recommendation/RecommendedSection';
 import { Button, EmptyState } from '@/components/ui';
 import { Pagination } from '@/components/ui/Pagination';
 import { useMarketplace } from '@/context/MarketplaceContext';
@@ -22,7 +24,8 @@ import { useLocation } from '@/context/LocationContext';
 import { formatCurrency } from '@/lib/format';
 import { orchardSurface } from '@/lib/gradients';
 import { cn } from '@/lib/cn';
-import type { Orchard, FilterOptions, PageMeta } from '@/types';
+import type { Orchard, FilterOptions, PageMeta, RecommendationItem } from '@/types';
+
 
 /* ─── Constants ─────────────────────────────────────────────────────── */
 const SORTS = [
@@ -148,6 +151,25 @@ export default function ExplorePage() {
 
   const [topRated, setTopRated] = useState<Orchard[]>([]);
   const [topRatedLoading, setTopRatedLoading] = useState(true);
+
+  const [recommendations, setRecommendations] = useState<RecommendationItem[]>([]);
+  const [recommendationsLoading, setRecommendationsLoading] = useState(true);
+  const [recommendationsError, setRecommendationsError] = useState<string | null>(null);
+
+  const loadRecommendations = useCallback(() => {
+    setRecommendationsLoading(true);
+    setRecommendationsError(null);
+    recommendationService
+      .getPersonalized({ limit: 4 })
+      .then((res) => setRecommendations(res.recommendations))
+      .catch(() => setRecommendationsError('Unable to load personalized recommendations'))
+      .finally(() => setRecommendationsLoading(false));
+  }, []);
+
+  useEffect(() => {
+    loadRecommendations();
+  }, [user, loadRecommendations]);
+
 
   /* ── Parsed URL state ── */
   const fruitList   = useMemo(() => (params.get('fruit')     || '').split(',').filter(Boolean), [params]);
@@ -319,7 +341,21 @@ export default function ExplorePage() {
         />
       </div>
 
+      {/* ── Smart Recommendations Section ── */}
+      <div className="container-page pt-6">
+        <RecommendedSection
+          title="Recommended For You"
+          subtitle="Personalized recommendations calculated using your activity, preferences, and orchard quality algorithms."
+          items={recommendations}
+          isLoading={recommendationsLoading}
+          error={recommendationsError}
+          onRetry={loadRecommendations}
+          maxItems={4}
+        />
+      </div>
+
       {/* ── Filter + Results ── */}
+
       <div className="container-page py-6">
         <div className="flex flex-wrap items-start gap-6">
 

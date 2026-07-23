@@ -14,6 +14,7 @@ import availabilityRoutes from './availability.routes.js';
 import weatherRoutes from './weather.routes.js';
 import questionRoutes from './question.routes.js';
 import followRoutes from './follow.routes.js';
+import recommendationRoutes from './recommendation.routes.js';
 
 const router = Router();
 
@@ -31,5 +32,7 @@ router.use('/images', imageRoutes);
 router.use('/orchards', availabilityRoutes);
 router.use('/weather', weatherRoutes);
 router.use('/questions', questionRoutes);
+router.use('/recommendations', recommendationRoutes);
 router.use('/', followRoutes);
 export default router;
+
