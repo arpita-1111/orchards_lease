@@ -33,6 +33,9 @@ import { orchardSurface } from '@/lib/gradients';
 import { getErrorMessage } from '@/lib/apiClient';
 import { cn } from '@/lib/cn';
 import type { Orchard, Review } from '@/types';
+import { OrchardCalendar } from '@/components/OrchardCalendar';
+import OrchardHistoryEditor from '@/components/orchard/OrchardHistoryEditor';
+<OrchardCalendar orchardId="{orchard._id}"/>
 
 export default function OrchardDetailPage() {
   const { slug = '' } = useParams();
@@ -376,6 +379,13 @@ export default function OrchardDetailPage() {
                 {waterInfo.description}
               </p>
             )}
+          </div>
+
+          {/* Pest & Disease History (read-only) */}
+          <div className="mb-7">
+            <OrchardHistoryEditor value={(orchard as any).pestHistory} readOnly title="Pest history" />
+            <div className="mt-4" />
+            <OrchardHistoryEditor value={(orchard as any).diseaseHistory} readOnly title="Disease history" />
           </div>
 
           {orchard.amenities.length > 0 && (
