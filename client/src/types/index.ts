@@ -403,9 +403,18 @@ export interface RecommendationItem {
 
 export interface RecommendationResponse {
   recommendations: RecommendationItem[];
+}export interface Treatment {
+  date: string;
+  method: string;
+  chemicals?: string[];
+  notes?: string;
 }
 
-
-
-
-
+export interface HistoryEntry {
+  incidentDate: string;
+  season?: string;
+  items?: string[];
+  severity?: string;
+  description?: string;
+  treatments?: Treatment[];
+}
