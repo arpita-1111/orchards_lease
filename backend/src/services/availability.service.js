@@ -1,6 +1,6 @@
 import Orchard from '../models/Orchard.js';
 import Booking from '../models/Booking.js';
-import { BOOKING_STATUS } from '../utils/constants.js';
+import { BOOKING_STATUS, OCCUPANCY_STATUS } from '../utils/constants.js';
 
 /**
  * Checks whether two half-open date ranges [startA, endA) and [startB, endB) overlap.
@@ -41,6 +41,24 @@ export const hasActiveBookingOverlap = async (orchardId, startDate, endDate) => 
 };
 
 /**
+ * Determines an orchard's current occupancy status for a given moment in time.
+ */
+export const computeOccupancyStatus = (blockedDates = [], activeBookings = [], atDate = new Date()) => {
+  const covers = (start, end) => new Date(start) <= atDate && atDate < new Date(end);
+
+  if (blockedDates.some((b) => b.reason === 'Maintenance' && covers(b.startDate, b.endDate))) {
+    return OCCUPANCY_STATUS.MAINTENANCE;
+  }
+  if (activeBookings.some((b) => b.status === BOOKING_STATUS.APPROVED && covers(b.startDate, b.endDate))) {
+    return OCCUPANCY_STATUS.LEASED;
+  }
+  if (activeBookings.some((b) => b.status === BOOKING_STATUS.REQUESTED && covers(b.startDate, b.endDate))) {
+    return OCCUPANCY_STATUS.RESERVED;
+  }
+  return OCCUPANCY_STATUS.AVAILABLE;
+};
+
+/**
  * Assembles and returns full availability object for an orchard.
  */
 export const fetchOrchardAvailability = async (orchardId) => {
@@ -74,11 +92,12 @@ export const fetchOrchardAvailability = async (orchardId) => {
   const harvestPeriods = blockedDates.filter((b) => b.reason === 'Harvest');
   const personalPeriods = blockedDates.filter((b) => b.reason === 'Personal');
   const systemPeriods = blockedDates.filter((b) => b.reason === 'System');
-
+  const occupancyStatus = computeOccupancyStatus(blockedDates, bookedDates);
   return {
     orchardId: orchard._id,
     gardenName: orchard.gardenName,
     available: orchard.available,
+    occupancyStatus,
     availabilityDates: orchard.availabilityDates || [],
     blockedDates,
     bookedDates,

@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Wrench, Sprout, Lo
 import { availabilityService } from '@/services/availability.service';
 import type { OrchardAvailabilityResponse, BlockedDate, BookedDate } from '@/types';
 import { cn } from '@/lib/cn';
+import { OccupancyBadge } from '@/components/orchard/OccupancyBadge';
 
 interface AvailabilityCalendarProps {
   orchardId: string;
@@ -176,6 +177,7 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
           </div>
           <div>
             <h3 className="font-serif text-lg font-bold text-ink">Orchard Availability Calendar</h3>
+            {data && <OccupancyBadge status={data.occupancyStatus} />}
             <p className="text-xs text-faint">Real-time lease availability and scheduled maintenance</p>
           </div>
         </div>

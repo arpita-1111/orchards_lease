@@ -143,11 +143,12 @@ export interface BookedDate {
   endDate: string;
   status: string;
 }
-
+export type OccupancyStatus = 'available' | 'reserved' | 'leased' | 'maintenance';
 export interface OrchardAvailabilityResponse {
   orchardId: string;
   gardenName: string;
   available: boolean;
+  occupancyStatus: OccupancyStatus;
   availabilityDates: { startDate: string; endDate: string; note?: string }[];
   blockedDates: BlockedDate[];
   bookedDates: BookedDate[];
