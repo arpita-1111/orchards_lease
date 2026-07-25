@@ -6,6 +6,7 @@ import {
   deleteBlockedDate,
   updateOrchardAvailability,
 } from '../controllers/availability.controller.js';
+import { requireAuth } from '../middleware/auth.middleware.js';
 import { protect } from '../middleware/auth.middleware.js';
 import { validate } from '../middleware/validate.middleware.js';
 import {
@@ -19,6 +20,8 @@ const router = Router({ mergeParams: true });
 // GET /api/orchards/:id/availability (Public)
 router.get('/:id/availability', getOrchardAvailability);
 
+// PUT /api/orchards/:id/availability (Protected / Seller)
+router.put('/:id/availability', requireAuth, updateOrchardAvailability);
 // POST /api/orchards/:id/block-dates (Protected / Seller / Admin)
 router.post('/:id/block-dates', protect, validate(createBlockDateSchema), createBlockedDate);
 

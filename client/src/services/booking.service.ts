@@ -45,34 +45,23 @@ export const bookingService = {
     return res.data.data;
   },
 
-  updateStatus: async (bookingId: string, action: 'approve' | 'reject' | 'cancel' | 'complete', reason?: string) => {
-    const res = await apiClient.patch<ApiResponse<Booking>>(`/bookings/${bookingId}/status`, { action, reason });
+  approve: async (bookingId: string) => {
+    const res = await apiClient.post<ApiResponse<Booking>>(`/bookings/${bookingId}/approve`);
     return res.data.data;
   },
 
-  async approve(id: string) {
-    return this.updateStatus(id, 'approve');
+  reject: async (bookingId: string, reason?: string) => {
+    const res = await apiClient.post<ApiResponse<Booking>>(`/bookings/${bookingId}/reject`, { reason });
+    return res.data.data;
   },
 
-  async reject(id: string) {
-    return this.updateStatus(id, 'reject');
+  cancel: async (bookingId: string, reason?: string) => {
+    const res = await apiClient.post<ApiResponse<Booking>>(`/bookings/${bookingId}/cancel`, { reason });
+    return res.data.data;
   },
 
-  async complete(id: string) {
-    return this.updateStatus(id, 'complete');
+  complete: async (bookingId: string) => {
+    const res = await apiClient.post<ApiResponse<Booking>>(`/bookings/${bookingId}/complete`);
+    return res.data.data;
   },
-
-  async downloadAgreement(id: string) {
-    const { jsPDF } = await import('jspdf');
-    const doc = new jsPDF();
-    doc.setFont("Helvetica", "bold");
-    doc.setFontSize(22);
-    doc.text("ORCHARD LEASE AGREEMENT", 20, 30);
-    doc.setFont("Helvetica", "normal");
-    doc.setFontSize(12);
-    doc.text(`Agreement ID: ${id}`, 20, 45);
-    doc.text("This document certifies a lease booking on OrchardLease platform.", 20, 60);
-    doc.text("Terms and conditions apply as per the platform user agreement.", 20, 70);
-    doc.save(`lease_agreement_${id}.pdf`);
-  }
 };
