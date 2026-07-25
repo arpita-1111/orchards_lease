@@ -32,6 +32,7 @@ const empty = {
   areaUnit: 'acre',
   rentType: 'season',
   price: 0,
+  seasonalPricing: [] as { label: string; startMonth: number; endMonth: number; price: number }[],
   amenities: [] as string[],
   available: true,
 
@@ -64,8 +65,8 @@ const empty = {
   certificationDocumentUrl: '',
 
   images: [] as LocalOrchardImage[],
-  pestHistory: [],
-  diseaseHistory: [],
+  pestIncidents: [] as unknown[],
+  diseaseIncidents: [] as unknown[],
 };
 
 export default function OrchardForm() {
@@ -113,6 +114,7 @@ export default function OrchardForm() {
       areaUnit: o.areaUnit,
       rentType: o.rentType,
       price: o.price,
+      seasonalPricing: (o as any).seasonalPricing || [],
       amenities: o.amenities,
       available: o.available,
 
@@ -145,8 +147,8 @@ export default function OrchardForm() {
       certificationDocumentUrl: (o as any).organicCertification?.documentUrl || '',
 
       images: (o.images as unknown as LocalOrchardImage[]) || [],
-      pestHistory: (o as any).pestHistory || [],
-      diseaseHistory: (o as any).diseaseHistory || [],
+      pestIncidents: (o as any).pestIncidents || [],
+      diseaseIncidents: (o as any).diseaseIncidents || [],
     });
 
   const set = (k: string, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
@@ -176,8 +178,8 @@ export default function OrchardForm() {
 
       soilFertility: form.soilFertility,
       waterSourceQuality: form.waterSourceQuality,
-      pestHistory: form.pestHistory,
-      diseaseHistory: form.diseaseHistory,
+      pestIncidents: form.pestIncidents,
+      diseaseIncidents: form.diseaseIncidents,
       maintenanceStatus: form.maintenanceStatus,
       orchardAge: Number(form.orchardAge),
 
@@ -330,6 +332,89 @@ export default function OrchardForm() {
               </option>
             ))}
           </Select>
+
+          <div className="sm:col-span-2">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-sm font-semibold">Seasonal pricing (optional)</p>
+              <button
+                type="button"
+                onClick={() =>
+                  set('seasonalPricing', [
+                    ...form.seasonalPricing,
+                    { label: '', startMonth: 1, endMonth: 3, price: form.price },
+                  ])
+                }
+                className="text-xs font-semibold text-forest hover:underline"
+              >
+                + Add season
+              </button>
+            </div>
+            <p className="mb-3 text-xs text-faint">
+              Set a different price for specific months of the year — e.g. a higher price during peak harvest season.
+            </p>
+            {form.seasonalPricing.map((s, i) => (
+              <div key={i} className="mb-2 grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-2">
+                <input
+                  placeholder="Season label (e.g. Peak Season)"
+                  value={s.label}
+                  onChange={(e) => {
+                    const next = [...form.seasonalPricing];
+                    next[i] = { ...next[i], label: e.target.value };
+                    set('seasonalPricing', next);
+                  }}
+                  className="rounded-lg border border-sand bg-cream px-2.5 py-2 text-sm outline-none focus:border-forest"
+                />
+                <select
+                  value={s.startMonth}
+                  onChange={(e) => {
+                    const next = [...form.seasonalPricing];
+                    next[i] = { ...next[i], startMonth: Number(e.target.value) };
+                    set('seasonalPricing', next);
+                  }}
+                  className="rounded-lg border border-sand bg-cream px-2 py-2 text-sm outline-none focus:border-forest"
+                >
+                  {Array.from({ length: 12 }, (_, m) => (
+                    <option key={m + 1} value={m + 1}>
+                      {new Date(2000, m).toLocaleString('en', { month: 'short' })}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={s.endMonth}
+                  onChange={(e) => {
+                    const next = [...form.seasonalPricing];
+                    next[i] = { ...next[i], endMonth: Number(e.target.value) };
+                    set('seasonalPricing', next);
+                  }}
+                  className="rounded-lg border border-sand bg-cream px-2 py-2 text-sm outline-none focus:border-forest"
+                >
+                  {Array.from({ length: 12 }, (_, m) => (
+                    <option key={m + 1} value={m + 1}>
+                      {new Date(2000, m).toLocaleString('en', { month: 'short' })}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  placeholder="Price"
+                  value={s.price}
+                  onChange={(e) => {
+                    const next = [...form.seasonalPricing];
+                    next[i] = { ...next[i], price: Number(e.target.value) };
+                    set('seasonalPricing', next);
+                  }}
+                  className="w-24 rounded-lg border border-sand bg-cream px-2.5 py-2 text-sm outline-none focus:border-forest"
+                />
+                <button
+                  type="button"
+                  onClick={() => set('seasonalPricing', form.seasonalPricing.filter((_, idx) => idx !== i))}
+                  className="text-xs font-semibold text-terra hover:underline"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
         </Card>
 
         {/* Orchard Health Parameters Section (Issue #72) */}

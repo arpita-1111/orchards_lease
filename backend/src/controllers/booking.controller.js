@@ -9,9 +9,21 @@ import Orchard from '../models/Orchard.js';
 import { notify } from '../services/notification.service.js';
 
 /* ------------------------- Pricing helper -------------------------- */
+const getSeasonalBasePrice = (orchard, startDate) => {
+  const month = new Date(startDate).getMonth() + 1; // 1-12
+  const season = (orchard.seasonalPricing || []).find((s) => {
+    if (s.startMonth <= s.endMonth) {
+      return month >= s.startMonth && month <= s.endMonth;
+    }
+    // handles seasons that wrap around the year, e.g. Nov-Feb
+    return month >= s.startMonth || month <= s.endMonth;
+  });
+  return season ? season.price : orchard.price;
+};
+
 const computeTotal = (orchard, startDate, endDate) => {
   const days = Math.max(1, Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)));
-  let total = orchard.price;
+  let total = getSeasonalBasePrice(orchard, startDate);
 
   // apply best-matching pricing rule by duration
   const rule = (orchard.pricingRules || [])
