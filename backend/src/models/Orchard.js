@@ -24,6 +24,38 @@ const pricingRuleSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const seasonalPricingSchema = new mongoose.Schema(
+  {
+    label: { type: String, required: true, trim: true }, // e.g. "Peak Season"
+    startMonth: { type: Number, required: true, min: 1, max: 12 },
+    endMonth: { type: Number, required: true, min: 1, max: 12 },
+    price: { type: Number, required: true, min: 0 },
+  },
+  { _id: true }
+);
+
+const treatmentSchema = new mongoose.Schema(
+  {
+    date: { type: Date, required: true },
+    method: { type: String, default: '' },
+    chemicals: { type: [String], default: [] },
+    notes: { type: String, default: '' },
+  },
+  { _id: false }
+);
+
+const historyEntrySchema = new mongoose.Schema(
+  {
+    incidentDate: { type: Date, required: true },
+    season: { type: String, default: '' },
+    items: { type: [String], default: [] },
+    severity: { type: String, default: '' },
+    description: { type: String, default: '' },
+    treatments: { type: [treatmentSchema], default: [] },
+  },
+  { _id: true }
+);
+
 const dateRangeSchema = new mongoose.Schema(
   {
     startDate: { type: Date, required: true },
@@ -129,6 +161,7 @@ const orchardSchema = new mongoose.Schema(
     rentType: { type: String, enum: Object.values(RENT_TYPE), default: RENT_TYPE.SEASON },
     price: { type: Number, required: true, min: 0, index: true },
     pricingRules: { type: [pricingRuleSchema], default: [] },
+    seasonalPricing: { type: [seasonalPricingSchema], default: [] },
 
     // media
     images: { type: [imageSchema], default: [] },
@@ -189,6 +222,8 @@ const orchardSchema = new mongoose.Schema(
       enum: ['Low', 'Medium', 'High', 'Unknown'],
       default: 'Unknown',
     },
+    pestIncidents: { type: [historyEntrySchema], default: [] },
+    diseaseIncidents: { type: [historyEntrySchema], default: [] },
     maintenanceStatus: {
       type: String,
       enum: ['Good', 'Average', 'Poor', 'Unknown'],

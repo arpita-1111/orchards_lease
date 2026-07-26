@@ -13,9 +13,9 @@ export default function OrchardHistoryEditor({
   readOnly?: boolean;
   title?: string;
 }) {
-  const [items, setItems] = useState<HistoryEntry[]>(value || []);
+  const [items, setItems] = useState<HistoryEntry[]>(Array.isArray(value) ? value : []);
 
-  useEffect(() => setItems(value || []), [value]);
+  useEffect(() => setItems(Array.isArray(value) ? value : []), [value]);
   useEffect(() => onChange && onChange(items), [items]);
 
   const addEntry = () => {
@@ -58,11 +58,11 @@ export default function OrchardHistoryEditor({
               </div>
               <div className="mb-2 text-sm text-ink">{e.items?.join(', ')}</div>
               {e.description && <p className="mb-2 text-sm text-faint">{e.description}</p>}
-              {e.treatments?.length > 0 && (
+              {(e.treatments?.length ?? 0) > 0 && (
                 <div className="mt-2 text-sm">
                   <div className="mb-1 font-semibold">Treatments</div>
                   <ul className="list-inside list-disc text-sm text-faint">
-                    {e.treatments.map((t, j) => (
+                    {(e.treatments ?? []).map((t, j) => (
                       <li key={j}>{`${new Date(t.date).toLocaleDateString()} · ${t.method || ''} ${t.chemicals?.length ? `· ${t.chemicals.join(', ')}` : ''}`}</li>
                     ))}
                   </ul>
