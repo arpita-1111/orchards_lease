@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, MoreVertical, Copy, EyeOff, Eye, Archive, Trash2, Calendar, Wrench, X } from 'lucide-react';
+import { Plus, MoreVertical, Copy, EyeOff, Eye, Archive, Trash2, Calendar, Wrench, X, BarChart2 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { orchardService } from '@/services/orchard.service';
 import { bookingService } from '@/services/booking.service';
 import { EmptyState, Spinner } from '@/components/ui';
 import { ManageAvailabilityPanel } from '@/components/seller/ManageAvailabilityPanel';
+import { OrchardAnalyticsPanel } from '@/components/seller/OrchardAnalyticsPanel';
 import { useToast } from '@/context/ToastContext';
 import { formatCurrency, formatNumber, titleCase } from '@/lib/format';
 import { orchardSurface } from '@/lib/gradients';
@@ -21,6 +22,7 @@ export default function SellerOrchards() {
   const [menuId, setMenuId] = useState<string | null>(null);
 
   const [managingOrchard, setManagingOrchard] = useState<Orchard | null>(null);
+  const [analyticsOrchard, setAnalyticsOrchard] = useState<Orchard | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -156,6 +158,7 @@ export default function SellerOrchards() {
                       ) : (
                         <Item icon={EyeOff} label="Unpublish" onClick={() => act(() => orchardService.setStatus(o._id, 'unpublish'), 'Unpublished')} />
                       )}
+                      <Item icon={BarChart2} label="Analytics" onClick={() => { setMenuId(null); setAnalyticsOrchard(o); }} />
                       <Item icon={Copy} label="Duplicate" onClick={() => act(() => orchardService.clone(o._id), 'Duplicated')} />
                       <Item icon={Wrench} label="Availability calendar" onClick={() => { setMenuId(null); setManagingOrchard(o); }} />
                       <Item icon={Calendar} label="Harvest schedule" onClick={() => navigate(`/seller/orchards/${o._id}/harvest`)} />
@@ -188,6 +191,29 @@ export default function SellerOrchards() {
               orchardId={managingOrchard._id}
               gardenName={managingOrchard.gardenName}
               onClose={() => setManagingOrchard(null)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Analytics modal (Feature #28) */}
+      {analyticsOrchard && (
+        <div
+          className="fixed inset-0 z-[85] flex items-center justify-center overflow-y-auto bg-[rgba(28,36,22,.5)] p-4 py-8 backdrop-blur-[3px]"
+          onClick={(e) => e.target === e.currentTarget && setAnalyticsOrchard(null)}
+        >
+          <div className="w-full max-w-[820px] max-h-[92vh] animate-fadeup overflow-y-auto rounded-3xl bg-cream shadow-pop border border-sand p-6">
+            <div className="flex justify-end mb-2">
+              <button
+                onClick={() => setAnalyticsOrchard(null)}
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-sand bg-cream text-sub hover:bg-chip"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <OrchardAnalyticsPanel
+              orchardId={analyticsOrchard._id}
+              gardenName={analyticsOrchard.gardenName}
             />
           </div>
         </div>
