@@ -20,17 +20,18 @@ const router = Router({ mergeParams: true });
 // GET /api/orchards/:id/availability (Public)
 router.get('/:id/availability', getOrchardAvailability);
 
-// PUT /api/orchards/:id/availability (Protected / Seller)
+// PUT /api/orchards/:id/availability (requireAuthed / Seller)
 router.put('/:id/availability', requireAuth, updateOrchardAvailability);
-// POST /api/orchards/:id/block-dates (Protected / Seller / Admin)
-router.post('/:id/block-dates', requireAuth , validate(createBlockDateSchema), createBlockedDate);
+// POST /api/orchards/:id/block-dates (requireAuthed / Seller / Admin)
+router.post('/:id/block-dates', requireAuth, validate(createBlockDateSchema), createBlockedDate);
 
-// PUT /api/orchards/:id/block-dates/:blockId (Protected / Seller / Admin)
+// PUT /api/orchards/:id/block-dates/:blockId (requireAuthed / Seller / Admin)
 router.put('/:id/block-dates/:blockId', requireAuth, validate(updateBlockDateSchema), updateBlockedDate);
 
-// DELETE /api/orchards/:id/block-dates/:blockId (Protected / Seller / Admin)
+// DELETE /api/orchards/:id/block-dates/:blockId (requireAuthed / Seller / Admin)
 router.delete('/:id/block-dates/:blockId', requireAuth, validate(blockIdParamSchema), deleteBlockedDate);
 
-
+// PUT /api/orchards/:id/availability (Legacy / requireAuthed)
+router.put('/:id/availability', requireAuth, updateOrchardAvailability);
 
 export default router;

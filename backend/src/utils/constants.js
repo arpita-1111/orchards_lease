@@ -28,6 +28,13 @@ export const BOOKING_STATUS = Object.freeze({
   COMPLETED: 'completed',
 });
 
+export const OCCUPANCY_STATUS = Object.freeze({
+  AVAILABLE: 'available',
+  RESERVED: 'reserved',
+  LEASED: 'leased',
+  MAINTENANCE: 'maintenance',
+});
+
 export const PAYMENT_STATUS = Object.freeze({
   UNPAID: 'unpaid',
   PENDING: 'pending',
