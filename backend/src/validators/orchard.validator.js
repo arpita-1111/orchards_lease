@@ -57,6 +57,10 @@ const baseOrchard = {
   totalArea: z.number().min(0).optional().default(0),
   areaUnit: z.nativeEnum(AREA_UNIT).optional().default(AREA_UNIT.ACRE),
   soilFertility: z.enum(['High', 'Medium', 'Low', 'Unknown']).optional().default('Unknown'),
+  productionEstimate: z.object({
+  value: z.number().min(0).nullable().optional(),
+  unit: z.enum(['kg', 'tonnes', 'quintals', 'boxes']).optional().default('kg'),
+}).optional(),
   waterSourceQuality: z.enum(['High', 'Medium', 'Low', 'Unknown']).optional().default('Unknown'),
   pestHistory: z.enum(['Low', 'Medium', 'High', 'Unknown']).optional().default('Unknown'),
   diseaseHistory: z.enum(['Low', 'Medium', 'High', 'Unknown']).optional().default('Unknown'),

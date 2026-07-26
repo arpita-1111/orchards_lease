@@ -207,6 +207,11 @@ const orchardSchema = new mongoose.Schema(
       enum: ['High', 'Medium', 'Low', 'Unknown'],
       default: 'Unknown',
     },
+    productionEstimate: {
+  value: { type: Number, min: 0, default: null },
+  unit: { type: String, enum: ['kg', 'tonnes', 'quintals', 'boxes'], default: 'kg' },
+  updatedAt: { type: Date, default: null },
+},
     waterSourceQuality: {
       type: String,
       enum: ['High', 'Medium', 'Low', 'Unknown'],
