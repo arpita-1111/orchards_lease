@@ -292,6 +292,80 @@ export const getDailyTraffic = async (days = 30) => {
 };
 
 /* ------------------------------------------------------------------ */
+/*  PER-ORCHARD ANALYTICS  (Feature #28)                                */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Returns KPI stats + monthly revenue series for a single orchard.
+ * sellerId is required for ownership verification upstream — this
+ * function trusts the caller has already confirmed ownership.
+ */
+export const getOrchardAnalytics = async (orchardId, months = 6) => {
+  const oid = objId(orchardId);
+
+  const [orchard, bookingStats, revenueAgg, monthlySeries] = await Promise.all([
+    // Basic orchard fields (views, saves, rating)
+    Orchard.findOne({ _id: oid, deletedAt: null })
+      .select('viewCount favouriteCount ratingAverage ratingCount gardenName')
+      .lean(),
+
+    // Booking counts grouped by status
+    Booking.aggregate([
+      { $match: { orchardId: oid } },
+      { $group: { _id: '$bookingStatus', count: { $sum: 1 } } },
+    ]),
+
+    // Total revenue from approved/completed bookings
+    Booking.aggregate([
+      { $match: { orchardId: oid, bookingStatus: { $in: REVENUE_STATUSES } } },
+      { $group: { _id: null, revenue: { $sum: '$totalAmount' }, count: { $sum: 1 } } },
+    ]),
+
+    // Monthly revenue series
+    (() => {
+      const start = new Date();
+      start.setMonth(start.getMonth() - (months - 1));
+      start.setDate(1);
+      start.setHours(0, 0, 0, 0);
+      return Booking.aggregate([
+        {
+          $match: {
+            orchardId: oid,
+            bookingStatus: { $in: REVENUE_STATUSES },
+            createdAt: { $gte: start },
+          },
+        },
+        {
+          $group: {
+            _id: { y: { $year: '$createdAt' }, m: { $month: '$createdAt' } },
+            revenue: { $sum: '$totalAmount' },
+            bookings: { $sum: 1 },
+          },
+        },
+        { $sort: { '_id.y': 1, '_id.m': 1 } },
+      ]);
+    })(),
+  ]);
+
+  const bookingsByStatus = bookingStats.reduce((acc, b) => ({ ...acc, [b._id]: b.count }), {});
+  const totalBookings = bookingStats.reduce((sum, b) => sum + b.count, 0);
+
+  return {
+    gardenName: orchard?.gardenName || '',
+    viewCount: orchard?.viewCount || 0,
+    favouriteCount: orchard?.favouriteCount || 0,
+    ratingAverage: orchard?.ratingAverage || 0,
+    ratingCount: orchard?.ratingCount || 0,
+    totalBookings,
+    bookingsByStatus,
+    revenue: revenueAgg[0]?.revenue || 0,
+    completedBookings: revenueAgg[0]?.count || 0,
+    pendingApprovals: bookingsByStatus[BOOKING_STATUS.REQUESTED] || 0,
+    revenueSeries: fillMonthlySeries(monthlySeries, months),
+  };
+};
+
+/* ------------------------------------------------------------------ */
 /*  helpers                                                             */
 /* ------------------------------------------------------------------ */
 

@@ -1,13 +1,17 @@
 import mongoose from 'mongoose';
 import asyncHandler from '../utils/asyncHandler.js';
+import ApiError from '../utils/ApiError.js';
 import { ok } from '../utils/ApiResponse.js';
 
 import Booking from '../models/Booking.js';
+import Orchard from '../models/Orchard.js';
 import {
   getSellerOverview,
   getSellerRevenueSeries,
   getSellerOrchardPerformance,
+  getOrchardAnalytics as _getOrchardAnalytics,
 } from '../services/analytics.service.js';
+import { ROLES } from '../utils/constants.js';
 
 /* --------------------------- Overview ------------------------------ */
 export const getOverview = asyncHandler(async (req, res) => {
@@ -139,6 +143,58 @@ export const getSellerReviews = asyncHandler(async (req, res) => {
     limit,
     total,
     totalPages,
+    hasNextPage: page < totalPages,
+    hasPrevPage: page > 1,
+  });
+});
+
+/* -------------- Per-orchard analytics  (Feature #28) -------------- */
+export const getOrchardAnalytics = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  // Ownership check
+  const orchard = await Orchard.findOne({ _id: id, deletedAt: null }).select('sellerId').lean();
+  if (!orchard) throw ApiError.notFound('Orchard not found');
+  if (req.user.role !== ROLES.ADMIN && String(orchard.sellerId) !== String(req.user._id)) {
+    throw ApiError.forbidden('You do not own this orchard');
+  }
+
+  const months = Math.min(parseInt(req.query.months, 10) || 6, 24);
+  const data = await _getOrchardAnalytics(id, months);
+  return ok(res, data, 'Orchard analytics');
+});
+
+/* -------------- Per-orchard bookings  (Feature #28) --------------- */
+export const getOrchardBookings = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  // Ownership check
+  const orchard = await Orchard.findOne({ _id: id, deletedAt: null }).select('sellerId').lean();
+  if (!orchard) throw ApiError.notFound('Orchard not found');
+  if (req.user.role !== ROLES.ADMIN && String(orchard.sellerId) !== String(req.user._id)) {
+    throw ApiError.forbidden('You do not own this orchard');
+  }
+
+  const page   = parseInt(req.query.page, 10) || 1;
+  const limit  = Math.min(parseInt(req.query.limit, 10) || 10, 50);
+  const skip   = (page - 1) * limit;
+
+  const filter = { orchardId: new mongoose.Types.ObjectId(id) };
+  if (req.query.status) filter.bookingStatus = req.query.status;
+
+  const [bookings, total] = await Promise.all([
+    Booking.find(filter)
+      .populate('renterId', 'name email avatar')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    Booking.countDocuments(filter),
+  ]);
+
+  const totalPages = Math.ceil(total / limit) || 1;
+  return ok(res, bookings, 'Orchard bookings', {
+    page, limit, total, totalPages,
     hasNextPage: page < totalPages,
     hasPrevPage: page > 1,
   });

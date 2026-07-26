@@ -411,6 +411,7 @@ export default function OrchardDetailPage() {
               district={orchard.district}
               state={orchard.state}
               address={orchard.address}
+              orchard={orchard}
             />
           </div>
 

@@ -1,5 +1,5 @@
 import api from '@/lib/apiClient';
-import type { ApiResponse } from '@/types';
+import type { ApiResponse, Booking } from '@/types';
 
 export interface SellerOverview {
   totalOrchards: number;
@@ -31,6 +31,21 @@ export interface PerformanceRow {
   bookings: number;
 }
 
+/* Feature #28 — per-orchard types */
+export interface OrchardAnalytics {
+  gardenName: string;
+  viewCount: number;
+  favouriteCount: number;
+  ratingAverage: number;
+  ratingCount: number;
+  totalBookings: number;
+  bookingsByStatus: Record<string, number>;
+  revenue: number;
+  completedBookings: number;
+  pendingApprovals: number;
+  revenueSeries: RevenuePoint[];
+}
+
 export const sellerService = {
   async overview() {
     const { data } = await api.get<ApiResponse<SellerOverview>>('/seller/overview');
@@ -49,6 +64,27 @@ export const sellerService = {
       params: { limit },
     });
     return data.data;
+  },
+
+  /* Feature #28 — per-orchard analytics */
+  async getOrchardAnalytics(id: string, months = 6) {
+    const { data } = await api.get<ApiResponse<OrchardAnalytics>>(
+      `/seller/orchards/${id}/analytics`,
+      { params: { months } }
+    );
+    return data.data;
+  },
+
+  /* Feature #28 — per-orchard bookings */
+  async getOrchardBookings(
+    id: string,
+    params: { page?: number; limit?: number; status?: string } = {}
+  ) {
+    const { data } = await api.get<ApiResponse<Booking[]>>(
+      `/seller/orchards/${id}/bookings`,
+      { params }
+    );
+    return data;
   },
 
   exportBookingsUrl: `${import.meta.env.VITE_API_URL || '/api/v1'}/seller/export/bookings`,
