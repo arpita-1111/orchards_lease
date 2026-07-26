@@ -17,6 +17,13 @@ const pricingRuleSchema = z.object({
   multiplier: z.number().min(0).optional().default(1),
 });
 
+const seasonalPricingSchema = z.object({
+  label: z.string().min(1),
+  startMonth: z.number().int().min(1).max(12),
+  endMonth: z.number().int().min(1).max(12),
+  price: z.number().min(0, 'Seasonal price must be positive'),
+});
+
 const treatmentSchema = z.object({
   date: z.coerce.date(),
   method: z.string().optional().default(''),
@@ -58,11 +65,12 @@ const baseOrchard = {
   rentType: z.nativeEnum(RENT_TYPE).optional().default(RENT_TYPE.SEASON),
   price: z.number().min(0, 'Price must be positive'),
   pricingRules: z.array(pricingRuleSchema).optional().default([]),
+  seasonalPricing: z.array(seasonalPricingSchema).optional().default([]),
   images: z.array(imageSchema).optional().default([]),
   thumbnail: z.string().url().optional().or(z.literal('')),
   amenities: z.array(z.string()).optional().default([]),
-  pestHistory: z.array(historyEntrySchema).optional().default([]),
-  diseaseHistory: z.array(historyEntrySchema).optional().default([]),
+  pestIncidents: z.array(historyEntrySchema).optional().default([]),
+  diseaseIncidents: z.array(historyEntrySchema).optional().default([]),
   available: z.boolean().optional().default(true),
   seo: z
     .object({

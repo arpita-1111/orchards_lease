@@ -38,6 +38,31 @@ export interface PricingRule {
   multiplier: number;
 }
 
+export interface SeasonalPricing {
+  _id?: string;
+  label: string;
+  startMonth: number;
+  endMonth: number;
+  price: number;
+}
+
+export interface Treatment {
+  date: string;
+  method?: string;
+  chemicals?: string[];
+  notes?: string;
+}
+
+export interface HistoryEntry {
+  _id?: string;
+  incidentDate: string;
+  season?: string;
+  items?: string[];
+  severity?: string;
+  description?: string;
+  treatments?: Treatment[];
+}
+
 export interface OrganicCertification {
   isCertified: boolean;
   expiryDate?: string | null;
@@ -52,13 +77,6 @@ export type OrchardStatus =
   | 'unpublished'
   | 'rejected'
   | 'archived';
-
-export interface OrganicCertification {
-  isCertified: boolean;
-  expiryDate?: string | null;
-  documentUrl?: string;
-  certificateNumber?: string;
-}
 
 export interface WaterSourcesInfo {
   primary: string;
@@ -89,6 +107,7 @@ export interface Orchard {
   rentType: string;
   price: number;
   pricingRules: PricingRule[];
+  seasonalPricing?: SeasonalPricing[];
   images: OrchardImage[];
   thumbnail: string;
   amenities: string[];
@@ -113,6 +132,8 @@ export interface Orchard {
   waterSourceQuality?: 'High' | 'Medium' | 'Low' | 'Unknown';
   pestHistory?: 'Low' | 'Medium' | 'High' | 'Unknown';
   diseaseHistory?: 'Low' | 'Medium' | 'High' | 'Unknown';
+  pestIncidents?: HistoryEntry[];
+  diseaseIncidents?: HistoryEntry[];
   maintenanceStatus?: 'Good' | 'Average' | 'Poor' | 'Unknown';
   orchardAge?: number;
   healthScore?: HealthScoreData;
@@ -234,7 +255,6 @@ export interface Review {
   updatedAt?: string;
 }
 
-
 export interface AppNotification {
   _id: string;
   type: string;
@@ -300,7 +320,6 @@ export interface FilterOptions {
   rentTypes: string[];
   areaUnits: string[];
   states: string[];
-  // Live facets — only values actually present in published orchards
   availableRentTypes: string[];
   availableAmenities: string[];
   priceRange: { min: number; max: number };
