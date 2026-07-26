@@ -65,8 +65,8 @@ const empty = {
   certificationDocumentUrl: '',
 
   images: [] as LocalOrchardImage[],
-  pestIncidents: [] as unknown[],
-  diseaseIncidents: [] as unknown[],
+  pestHistoryRecords: [],
+  diseaseHistoryRecords: [],
 };
 
 export default function OrchardForm() {
@@ -147,8 +147,8 @@ export default function OrchardForm() {
       certificationDocumentUrl: (o as any).organicCertification?.documentUrl || '',
 
       images: (o.images as unknown as LocalOrchardImage[]) || [],
-      pestIncidents: (o as any).pestIncidents || [],
-      diseaseIncidents: (o as any).diseaseIncidents || [],
+      pestHistoryRecords: (o as any).pestHistoryRecords || (o as any).pestHistory || [],
+      diseaseHistoryRecords: (o as any).diseaseHistoryRecords || (o as any).diseaseHistory || [],
     });
 
   const set = (k: string, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
@@ -296,9 +296,9 @@ export default function OrchardForm() {
 
         <Card className="p-6">
           <p className="mb-3 text-sm font-semibold">Pest & Disease History</p>
-          <OrchardHistoryEditor value={(form as any).pestHistory} onChange={(v) => set('pestHistory', v)} title="Pest history" />
+          <OrchardHistoryEditor value={(form as any).pestHistoryRecords} onChange={(v) => set('pestHistoryRecords', v)} title="Pest history" />
           <div className="mt-4" />
-          <OrchardHistoryEditor value={(form as any).diseaseHistory} onChange={(v) => set('diseaseHistory', v)} title="Disease history" />
+          <OrchardHistoryEditor value={(form as any).diseaseHistoryRecords} onChange={(v) => set('diseaseHistoryRecords', v)} title="Disease history" />
         </Card>
 
         <Card className="grid gap-4 p-6 sm:grid-cols-2">
