@@ -208,15 +208,19 @@ export default function OrchardDetailPage() {
   const organicCert = (orchard as any).organicCertification;
   const waterInfo = (orchard as any).waterSources;
 
+ const productionEstimate = (orchard as any).productionEstimate;
+
   const stats = [
     { k: 'Total trees', v: orchard.totalTrees.toLocaleString() },
     { k: 'Avg yield / tree', v: `${orchard.averageFruitPerTree} fruits` },
     { k: 'Expected yield', v: `${orchard.expectedYield.toLocaleString()} kg` },
+    ...(productionEstimate?.value
+      ? [{ k: 'Est. annual production', v: `${productionEstimate.value.toLocaleString()} ${productionEstimate.unit}` }]
+      : []),
     { k: 'Plot area', v: `${orchard.totalArea} ${orchard.areaUnit}` },
     { k: 'Harvest window', v: formatDate(orchard.estimatedHarvestDate) },
     { k: 'Orchard Maturity', v: `${calculatedAge > 0 ? calculatedAge : 0} years old (Est. ${plantationYear})` },
   ];
-
   // Dynamic nearby facilities matching issue specifications
   const nearbyFacilities = [
     { name: `${orchard.district} Wholesalers`, type: 'Local Market', distance: '2.4 km', icon: Store },

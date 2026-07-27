@@ -44,6 +44,7 @@ const empty = {
 
   // Health Score Parameters (Issue #72)
   soilFertility: 'Unknown',
+  productionEstimate: { value: null, unit: 'kg' } as { value: number | null; unit: string },
   waterSourceQuality: 'Unknown',
   pestHistory: 'Unknown',
   diseaseHistory: 'Unknown',
@@ -124,6 +125,7 @@ export default function OrchardForm() {
       plantationYear: (o as any).plantationYear || 2020,
 
       soilFertility: (o as any).soilFertility || 'Unknown',
+      productionEstimate: (o as any).productionEstimate || { value: null, unit: 'kg' },
       waterSourceQuality: (o as any).waterSourceQuality || 'Unknown',
       pestHistory: (o as any).pestHistory || 'Unknown',
       diseaseHistory: (o as any).diseaseHistory || 'Unknown',
@@ -177,9 +179,10 @@ export default function OrchardForm() {
       longitude: Number(form.longitude),
 
       soilFertility: form.soilFertility,
+      productionEstimate: form.productionEstimate,
       waterSourceQuality: form.waterSourceQuality,
-      pestIncidents: form.pestIncidents,
-      diseaseIncidents: form.diseaseIncidents,
+      pestIncidents: form.pestHistoryRecords,
+      diseaseIncidents: form.diseaseHistoryRecords,
       maintenanceStatus: form.maintenanceStatus,
       orchardAge: Number(form.orchardAge),
 
@@ -431,6 +434,34 @@ export default function OrchardForm() {
               <option value="Medium">Medium Fertility (Standard)</option>
               <option value="Low">Low Fertility (Requires Supplementation)</option>
             </Select>
+
+            <div>
+              <label className="block text-sm font-medium mb-1 text-ink">Annual Production Estimate</label>
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  min={0}
+                  value={form.productionEstimate.value ?? ''}
+                  onChange={(e) =>
+                    set('productionEstimate', {
+                      ...form.productionEstimate,
+                      value: e.target.value === '' ? null : Number(e.target.value),
+                    })
+                  }
+                  placeholder="e.g. 500"
+                  className="flex-1"
+                />
+                <Select
+                  value={form.productionEstimate.unit}
+                  onChange={(e) => set('productionEstimate', { ...form.productionEstimate, unit: e.target.value })}
+                >
+                  <option value="kg">kg</option>
+                  <option value="tonnes">tonnes</option>
+                  <option value="quintals">quintals</option>
+                  <option value="boxes">boxes</option>
+                </Select>
+              </div>
+            </div>
 
             <Select label="Water Source Quality" value={form.waterSourceQuality} onChange={(e) => set('waterSourceQuality', e.target.value)}>
               <option value="Unknown">Unknown / Not Set</option>
