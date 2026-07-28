@@ -11,6 +11,7 @@ const imageSchema = new mongoose.Schema(
     url: { type: String, required: true },
     publicId: { type: String, default: '' }, // Cloudinary public id (placeholder)
     alt: { type: String, default: '' },
+    videoTourUrl: { type: String, default: '' },
   },
   { _id: false }
 );
