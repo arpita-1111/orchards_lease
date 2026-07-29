@@ -293,6 +293,7 @@ export default function OrchardDetailPage() {
       </div>
 
       {/* Hero + gallery */}
+      {/* Hero + gallery */}
       <div className="mb-7 flex items-stretch gap-2.5">
         <div className="relative flex-1 overflow-hidden rounded-[18px]" style={{ height: 'clamp(260px,38vw,420px)', ...surface }}>
           <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg,transparent 55%,rgba(20,30,15,.4))' }} />
@@ -316,6 +317,36 @@ export default function OrchardDetailPage() {
           ))}
         </div>
       </div>
+
+      {(orchard as any).videoTourUrl && (
+        <div className="mb-7">
+          <p className="mb-2 text-sm font-semibold">Video Tour</p>
+          <video src={(orchard as any).videoTourUrl} controls className="w-full rounded-2xl max-h-96" />
+        </div>
+      )}
+
+      {(orchard as any).documents?.length > 0 && (
+        <div className="mb-7">
+          <p className="mb-2 text-sm font-semibold">Orchard Documents</p>
+          <div className="space-y-2">
+            {(orchard as any).documents.map((doc: any, i: number) => (
+              <a
+                key={i}
+                href={doc.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between rounded-xl border border-sand bg-cream/60 px-4 py-3 hover:bg-cream transition-colors"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-ink">{doc.name}</p>
+                  <p className="text-xs text-faint">{doc.type}</p>
+                </div>
+                <span className="text-xs font-semibold text-forest">View / Download</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-wrap items-start gap-[30px]">
         {/* Left */}
