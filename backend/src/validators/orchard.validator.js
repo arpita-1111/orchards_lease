@@ -71,6 +71,7 @@ const baseOrchard = {
   pricingRules: z.array(pricingRuleSchema).optional().default([]),
   seasonalPricing: z.array(seasonalPricingSchema).optional().default([]),
   images: z.array(imageSchema).optional().default([]),
+  videoTourUrl: z.string().url().or(z.literal('')).optional().default(''),
   thumbnail: z.string().url().optional().or(z.literal('')),
   amenities: z.array(z.string()).optional().default([]),
   pestIncidents: z.array(historyEntrySchema).optional().default([]),
