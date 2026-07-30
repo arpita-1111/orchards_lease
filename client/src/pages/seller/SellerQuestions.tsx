@@ -15,6 +15,7 @@ import {
   HelpCircle
 } from 'lucide-react';
 import { getErrorMessage } from '@/lib/apiClient';
+import { sellerService, type InquiryAnalytics } from '@/services/seller.service';
 
 type QuestionStatusFilter = 'all' | 'unanswered' | 'answered';
 
@@ -25,15 +26,14 @@ export default function SellerQuestions() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<QuestionStatusFilter>('all');
   
-  // Pagination
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalQuestions, setTotalQuestions] = useState(0);
 
-  // Answering/Editing State
   const [replyingToId, setReplyingToId] = useState<string | null>(null);
   const [answerText, setAnswerText] = useState('');
   const [submittingAnswer, setSubmittingAnswer] = useState(false);
+  const [analytics, setAnalytics] = useState<InquiryAnalytics | null>(null);
 
   const loadQuestions = () => {
     setLoading(true);
@@ -61,6 +61,10 @@ export default function SellerQuestions() {
   useEffect(() => {
     loadQuestions();
   }, [filter, page]);
+
+  useEffect(() => {
+    sellerService.inquiryAnalytics().then(setAnalytics).catch(() => {});
+  }, []);
 
   const handleFilterChange = (newFilter: QuestionStatusFilter) => {
     setFilter(newFilter);
@@ -125,6 +129,33 @@ export default function SellerQuestions() {
           <h1 className="mt-0.5 font-serif text-[28px] font-semibold">Questions &amp; Answers</h1>
         </div>
       </div>
+
+      {/* Inquiry Analytics (Issue #118) */}
+      {analytics && (
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded-xl border border-sand bg-cream/60 p-4">
+            <p className="text-xs text-faint">Total inquiries</p>
+            <p className="text-xl font-semibold">{analytics.totalInquiries}</p>
+          </div>
+          <div className="rounded-xl border border-sand bg-cream/60 p-4">
+            <p className="text-xs text-faint">Avg response time</p>
+            <p className="text-xl font-semibold">
+              {analytics.avgResponseTimeHours != null ? `${analytics.avgResponseTimeHours}h` : '—'}
+            </p>
+          </div>
+          <div className="rounded-xl border border-sand bg-cream/60 p-4">
+            <p className="text-xs text-faint">Conversion rate</p>
+            <p className="text-xl font-semibold">{analytics.conversionRate}%</p>
+          </div>
+          
+            <a
+            href={sellerService.exportInquiriesUrl}
+            className="flex items-center justify-center rounded-xl border border-sand bg-cream/60 p-4 text-sm font-semibold text-forest hover:bg-cream"
+          >
+            Export CSV
+          </a>
+        </div>
+      )}
 
       {/* Filter Tabs */}
       <div className="mb-6 border-b border-sand">

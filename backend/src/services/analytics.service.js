@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import User from '../models/User.js';
 import Orchard from '../models/Orchard.js';
 import Booking from '../models/Booking.js';
+import Question from '../models/Question.js';
 import { BOOKING_STATUS, ORCHARD_STATUS, ROLES } from '../utils/constants.js';
 import { growthPercent } from '../utils/helpers.js';
 
@@ -187,7 +188,6 @@ export const getUserGrowthSeries = async (months = 12) => {
     { $sort: { '_id.y': 1, '_id.m': 1 } },
   ]);
 
-  // collapse roles into a single series keyed by month
   const merged = {};
   rows.forEach((r) => {
     const key = `${r._id.y}-${r._id.m}`;
@@ -295,33 +295,24 @@ export const getDailyTraffic = async (days = 30) => {
 /*  PER-ORCHARD ANALYTICS  (Feature #28)                                */
 /* ------------------------------------------------------------------ */
 
-/**
- * Returns KPI stats + monthly revenue series for a single orchard.
- * sellerId is required for ownership verification upstream — this
- * function trusts the caller has already confirmed ownership.
- */
 export const getOrchardAnalytics = async (orchardId, months = 6) => {
   const oid = objId(orchardId);
 
   const [orchard, bookingStats, revenueAgg, monthlySeries] = await Promise.all([
-    // Basic orchard fields (views, saves, rating)
     Orchard.findOne({ _id: oid, deletedAt: null })
       .select('viewCount favouriteCount ratingAverage ratingCount gardenName')
       .lean(),
 
-    // Booking counts grouped by status
     Booking.aggregate([
       { $match: { orchardId: oid } },
       { $group: { _id: '$bookingStatus', count: { $sum: 1 } } },
     ]),
 
-    // Total revenue from approved/completed bookings
     Booking.aggregate([
       { $match: { orchardId: oid, bookingStatus: { $in: REVENUE_STATUSES } } },
       { $group: { _id: null, revenue: { $sum: '$totalAmount' }, count: { $sum: 1 } } },
     ]),
 
-    // Monthly revenue series
     (() => {
       const start = new Date();
       start.setMonth(start.getMonth() - (months - 1));
@@ -395,3 +386,64 @@ function fillMonthlySeries(rows, months, fields = ['revenue', 'bookings']) {
   }
   return out;
 }
+
+/* ------------------------------------------------------------------ */
+/*  SELLER INQUIRY ANALYTICS (Issue #118)                              */
+/* ------------------------------------------------------------------ */
+
+export const getSellerInquiryAnalytics = async (sellerId, months = 6) => {
+  const sid = objId(sellerId);
+  const orchards = await Orchard.find({ sellerId: sid, deletedAt: null }).select('_id').lean();
+  const orchardIds = orchards.map((o) => o._id);
+
+  const start = new Date();
+  start.setMonth(start.getMonth() - (months - 1));
+  start.setDate(1);
+  start.setHours(0, 0, 0, 0);
+
+  const [totalInquiries, answeredAgg, monthlyTrends, distinctAskers, convertedAskers] = await Promise.all([
+    Question.countDocuments({ orchard: { $in: orchardIds } }),
+    Question.aggregate([
+      { $match: { orchard: { $in: orchardIds }, answeredAt: { $ne: null } } },
+      {
+        $group: {
+          _id: null,
+          avgResponseMs: { $avg: { $subtract: ['$answeredAt', '$createdAt'] } },
+        },
+      },
+    ]),
+    Question.aggregate([
+      { $match: { orchard: { $in: orchardIds }, createdAt: { $gte: start } } },
+      {
+        $group: {
+          _id: { y: { $year: '$createdAt' }, m: { $month: '$createdAt' } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { '_id.y': 1, '_id.m': 1 } },
+    ]),
+    Question.distinct('askedBy', { orchard: { $in: orchardIds } }),
+    Booking.distinct('renterId', { orchardId: { $in: orchardIds } }),
+  ]);
+
+  const convertedSet = new Set(convertedAskers.map(String));
+  const convertedCount = distinctAskers.filter((a) => convertedSet.has(String(a))).length;
+  const conversionRate = distinctAskers.length ? Math.round((convertedCount / distinctAskers.length) * 1000) / 10 : 0;
+
+  const avgResponseTimeHours = answeredAgg[0]?.avgResponseMs
+    ? Math.round((answeredAgg[0].avgResponseMs / (1000 * 60 * 60)) * 10) / 10
+    : null;
+
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const monthlyInquiryTrends = monthlyTrends.map((r) => ({
+    label: `${monthNames[r._id.m - 1]} ${r._id.y}`,
+    count: r.count,
+  }));
+
+  return {
+    totalInquiries,
+    avgResponseTimeHours,
+    conversionRate,
+    monthlyInquiryTrends,
+  };
+};

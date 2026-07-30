@@ -5,11 +5,13 @@ import { ok } from '../utils/ApiResponse.js';
 
 import Booking from '../models/Booking.js';
 import Orchard from '../models/Orchard.js';
+import Question from '../models/Question.js';
 import {
   getSellerOverview,
   getSellerRevenueSeries,
   getSellerOrchardPerformance,
   getOrchardAnalytics as _getOrchardAnalytics,
+  getSellerInquiryAnalytics,
 } from '../services/analytics.service.js';
 import { ROLES } from '../utils/constants.js';
 
@@ -76,6 +78,49 @@ export const exportBookingsCsv = asyncHandler(async (req, res) => {
 
   res.setHeader('Content-Type', 'text/csv');
   res.setHeader('Content-Disposition', 'attachment; filename="orchardlease-bookings.csv"');
+  return res.send(csv);
+});
+
+/* ----------------------- Inquiry Analytics (Issue #118) ------------ */
+export const getInquiryAnalytics = asyncHandler(async (req, res) => {
+  const months = Number(req.query.months) || 6;
+  const data = await getSellerInquiryAnalytics(req.user._id, months);
+  return ok(res, data);
+});
+
+export const exportInquiriesCsv = asyncHandler(async (req, res) => {
+  const orchards = await Orchard.find({ sellerId: req.user._id, deletedAt: null }).select('_id').lean();
+  const orchardIds = orchards.map((o) => o._id);
+
+  const questions = await Question.find({ orchard: { $in: orchardIds } })
+    .populate('orchard', 'gardenName')
+    .populate('askedBy', 'name email')
+    .sort({ createdAt: -1 })
+    .lean();
+
+  const header = ['Question ID', 'Orchard', 'Asked By', 'Question', 'Answered', 'Response Time (hrs)', 'Asked On'];
+  const escape = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+
+  const rows = questions.map((q) => {
+    const responseHours = q.answeredAt
+      ? Math.round(((new Date(q.answeredAt) - new Date(q.createdAt)) / (1000 * 60 * 60)) * 10) / 10
+      : '';
+    return [
+      q._id,
+      q.orchard?.gardenName || '',
+      q.askedBy?.name || '',
+      q.question,
+      q.answer ? 'Yes' : 'No',
+      responseHours,
+      q.createdAt?.toISOString().slice(0, 10),
+    ]
+      .map(escape)
+      .join(',');
+  });
+
+  const csv = [header.map(escape).join(','), ...rows].join('\n');
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', 'attachment; filename="orchardlease-inquiries.csv"');
   return res.send(csv);
 });
 
@@ -152,7 +197,6 @@ export const getSellerReviews = asyncHandler(async (req, res) => {
 export const getOrchardAnalytics = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  // Ownership check
   const orchard = await Orchard.findOne({ _id: id, deletedAt: null }).select('sellerId').lean();
   if (!orchard) throw ApiError.notFound('Orchard not found');
   if (req.user.role !== ROLES.ADMIN && String(orchard.sellerId) !== String(req.user._id)) {
@@ -168,7 +212,6 @@ export const getOrchardAnalytics = asyncHandler(async (req, res) => {
 export const getOrchardBookings = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  // Ownership check
   const orchard = await Orchard.findOne({ _id: id, deletedAt: null }).select('sellerId').lean();
   if (!orchard) throw ApiError.notFound('Orchard not found');
   if (req.user.role !== ROLES.ADMIN && String(orchard.sellerId) !== String(req.user._id)) {
@@ -199,4 +242,3 @@ export const getOrchardBookings = asyncHandler(async (req, res) => {
     hasPrevPage: page > 1,
   });
 });
-
