@@ -6,7 +6,7 @@ import {
 } from '../utils/constants.js';
 
 const imageSchema = z.object({
-  url: z.string().url(),
+  url: z.string().min(1, 'Image URL is required'),
   publicId: z.string().optional().default(''),
   alt: z.string().optional().default(''),
 });
@@ -71,8 +71,7 @@ const baseOrchard = {
   pricingRules: z.array(pricingRuleSchema).optional().default([]),
   seasonalPricing: z.array(seasonalPricingSchema).optional().default([]),
   images: z.array(imageSchema).optional().default([]),
-  videoTourUrl: z.string().url().or(z.literal('')).optional().default(''),
-  thumbnail: z.string().url().optional().or(z.literal('')),
+  thumbnail: z.string().optional().or(z.literal('')),
   amenities: z.array(z.string()).optional().default([]),
   pestIncidents: z.array(historyEntrySchema).optional().default([]),
   diseaseIncidents: z.array(historyEntrySchema).optional().default([]),

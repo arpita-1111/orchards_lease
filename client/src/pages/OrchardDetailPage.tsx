@@ -198,7 +198,17 @@ export default function OrchardDetailPage() {
     );
 
   const seller = typeof orchard.sellerId === 'object' ? orchard.sellerId : null;
-  const surface = orchardSurface(orchard.thumbnail, orchard.fruitTypes, orchard._id);
+  
+  const hasRealImages = orchard.images && orchard.images.length > 0 && orchard.images.some(img => img?.url);
+  const galleryItems = hasRealImages 
+    ? orchard.images.filter(img => img?.url).map(img => img.url)
+    : Array.from({ length: 4 }).map((_, i) => orchard.thumbnail || '');
+    
+  const currentImageUrl = hasRealImages
+    ? (galleryItems[galleryIndex] || galleryItems[0] || orchard.thumbnail)
+    : orchard.thumbnail;
+    
+  const surface = orchardSurface(currentImageUrl, orchard.fruitTypes, orchard._id);
   const rent = orchard.rentType?.startsWith('per') ? orchard.rentType : `per ${orchard.rentType}`;
   const fee = Math.round(orchard.price * 0.08);
   const dep = Math.round(orchard.price * 0.15);
@@ -301,20 +311,23 @@ export default function OrchardDetailPage() {
             Orchard photo · {orchard.district}, {orchard.state}
           </div>
         </div>
-        <div className="flex w-[84px] flex-none flex-col gap-2.5">
-          {[0, 1, 2, 3].map((i) => (
-            <button
-              key={i}
-              onClick={() => setGalleryIndex(i)}
-              className="h-[70px] rounded-[10px]"
-              style={{
-                ...surface,
-                filter: `hue-rotate(${i * 14}deg) brightness(${i === galleryIndex ? 1 : 0.86})`,
-                outline: i === galleryIndex ? '2px solid #2f5d3a' : '2px solid transparent',
-                outlineOffset: '2px',
-              }}
-            />
-          ))}
+        <div className="flex w-[84px] flex-none flex-col gap-2.5 overflow-y-auto max-h-[420px] scrollbar-none pr-1">
+          {galleryItems.map((url, i) => {
+            const itemSurface = orchardSurface(url, orchard.fruitTypes, orchard._id);
+            return (
+              <button
+                key={i}
+                onClick={() => setGalleryIndex(i)}
+                className="h-[70px] w-full rounded-[10px] flex-none"
+                style={{
+                  ...itemSurface,
+                  filter: !hasRealImages ? `hue-rotate(${i * 14}deg) brightness(${i === galleryIndex ? 1 : 0.86})` : `brightness(${i === galleryIndex ? 1 : 0.86})`,
+                  outline: i === galleryIndex ? '2px solid #2f5d3a' : '2px solid transparent',
+                  outlineOffset: '2px',
+                }}
+              />
+            );
+          })}
         </div>
       </div>
 
