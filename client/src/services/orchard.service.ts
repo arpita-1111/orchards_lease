@@ -136,5 +136,18 @@ export const orchardService = {
     );
     return data.data;
   },
+
+  async uploadImages(files: FileList | File[]) {
+    const formData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+      formData.append('images', files[i]);
+    }
+    const { data } = await api.post<ApiResponse<{ url: string; publicId: string }[]>>('/orchards/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return data.data;
+  },
 };
 

@@ -6,7 +6,7 @@ import {
 } from '../utils/constants.js';
 
 const imageSchema = z.object({
-  url: z.string().url(),
+  url: z.string().min(1, 'Image URL is required'),
   publicId: z.string().optional().default(''),
   alt: z.string().optional().default(''),
 });

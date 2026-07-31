@@ -8,6 +8,7 @@ import { getErrorMessage } from '@/lib/apiClient';
 import type { FilterOptions, Orchard } from '@/types';
 import { titleCase } from '@/lib/format';
 import { cn } from '@/lib/cn';
+import { Upload, Trash2, Plus, Image, Loader2 } from 'lucide-react';
 
 interface LocalOrchardImage {
   url: string;
@@ -77,6 +78,49 @@ export default function OrchardForm() {
   const [options, setOptions] = useState<FilterOptions | null>(null);
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
+  const [newImageUrl, setNewImageUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
+
+  const handleAddImageUrl = () => {
+    if (!newImageUrl.trim()) return;
+    if (!newImageUrl.startsWith('http://') && !newImageUrl.startsWith('https://') && !newImageUrl.startsWith('/uploads/')) {
+      toast.error('Please enter a valid URL (starting with http://, https:// or /uploads/)');
+      return;
+    }
+    const updatedImages = [...form.images, { url: newImageUrl.trim(), alt: '' }];
+    set('images', updatedImages);
+    setNewImageUrl('');
+  };
+
+  const handleRemoveImage = (index: number) => {
+    const updatedImages = form.images.filter((_, idx) => idx !== index);
+    set('images', updatedImages);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+    const invalidFiles = Array.from(files).filter(f => !allowedTypes.includes(f.type));
+    if (invalidFiles.length > 0) {
+      toast.error('Only PNG, JPG, and JPEG images are allowed.');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const uploaded = await orchardService.uploadImages(files);
+      const newImages = uploaded.map(img => ({ url: img.url, alt: '' }));
+      set('images', [...form.images, ...newImages]);
+      toast.success('Images uploaded successfully');
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
 
   useEffect(() => {
     orchardService.getFilterOptions().then(setOptions).catch(() => {});
@@ -241,6 +285,9 @@ export default function OrchardForm() {
             value={form.images[0]?.url || ''}
             onChange={(e) => set('images', e.target.value ? [{ url: e.target.value }] : [])}
           />
+          {form.videoTourUrl && (
+            <video src={form.videoTourUrl} controls className="w-full rounded-xl mt-2 max-h-64" />
+          )}
 
           <Input
             label="Video Tour URL"
