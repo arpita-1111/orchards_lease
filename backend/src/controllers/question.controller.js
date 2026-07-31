@@ -86,6 +86,7 @@ export const answerQuestion = asyncHandler(async (req, res) => {
   question.answer = answer;
   question.answeredBy = req.user._id;
   question.isOfficialAnswer = true;
+  question.answeredAt = new Date();
   await question.save();
 
   // Notify renter

@@ -10,7 +10,6 @@ import { titleCase } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import { Upload, Trash2, Plus, Image, Loader2 } from 'lucide-react';
 
-// Define a placeholder interface to safely handle the shape internally
 interface LocalOrchardImage {
   url: string;
   [key: string]: unknown;
@@ -37,13 +36,11 @@ const empty = {
   amenities: [] as string[],
   available: true,
 
-  // Soil Quality
   soilType: 'Loamy',
   soilDescription: '',
 
   plantationYear: 2020,
 
-  // Health Score Parameters (Issue #72)
   soilFertility: 'Unknown',
   productionEstimate: { value: null, unit: 'kg' } as { value: number | null; unit: string },
   waterSourceQuality: 'Unknown',
@@ -52,7 +49,6 @@ const empty = {
   maintenanceStatus: 'Unknown',
   orchardAge: 0,
 
-  // Water Sources & Irrigation (Issue #43)
   waterPrimarySource: 'Borewell',
   waterSecondarySource: 'None',
   waterAvailableYearRound: true,
@@ -60,13 +56,13 @@ const empty = {
   irrigationMethod: 'Drip',
   irrigationFrequency: 'Weekly',
 
-  // Organic Certification (Issue #46)
   isOrganicallyCertified: false,
   certificationExpiryDate: '',
   certificateNumber: '',
   certificationDocumentUrl: '',
 
   images: [] as LocalOrchardImage[],
+  videoTourUrl: '',
   pestHistoryRecords: [],
   diseaseHistoryRecords: [],
 };
@@ -176,7 +172,6 @@ export default function OrchardForm() {
       maintenanceStatus: (o as any).maintenanceStatus || 'Unknown',
       orchardAge: (o as any).orchardAge || 0,
 
-      // Water Sources Hydration (Issue #43)
       waterPrimarySource: (o as any).waterSources?.primary || (o as any).waterSource || 'Borewell',
       waterSecondarySource: (o as any).waterSources?.secondary || 'None',
       waterAvailableYearRound: (o as any).waterSources?.availableYearRound ?? true,
@@ -184,7 +179,6 @@ export default function OrchardForm() {
       irrigationMethod: (o as any).irrigationMethod || 'Drip',
       irrigationFrequency: (o as any).irrigationFrequency || 'Weekly',
 
-      // Organic Certification Hydration (Issue #46)
       isOrganicallyCertified: (o as any).organicCertification?.isCertified || false,
       certificationExpiryDate: (o as any).organicCertification?.expiryDate
         ? new Date((o as any).organicCertification.expiryDate).toISOString().split('T')[0]
@@ -193,6 +187,7 @@ export default function OrchardForm() {
       certificationDocumentUrl: (o as any).organicCertification?.documentUrl || '',
 
       images: (o.images as unknown as LocalOrchardImage[]) || [],
+      videoTourUrl: (o as any).videoTourUrl || '',
       pestHistoryRecords: (o as any).pestHistoryRecords || (o as any).pestHistory || [],
       diseaseHistoryRecords: (o as any).diseaseHistoryRecords || (o as any).diseaseHistory || [],
     });
@@ -222,6 +217,7 @@ export default function OrchardForm() {
       latitude: Number(form.latitude),
       longitude: Number(form.longitude),
 
+      videoTourUrl: form.videoTourUrl,
       soilFertility: form.soilFertility,
       productionEstimate: form.productionEstimate,
       waterSourceQuality: form.waterSourceQuality,
@@ -230,7 +226,6 @@ export default function OrchardForm() {
       maintenanceStatus: form.maintenanceStatus,
       orchardAge: Number(form.orchardAge),
 
-      // Water Sources Payload Structure (Issue #43)
       waterSources: {
         primary: form.waterPrimarySource,
         secondary: form.waterSecondarySource,
@@ -239,7 +234,6 @@ export default function OrchardForm() {
       },
       waterSource: form.waterPrimarySource,
 
-      // Organic Certification Payload Structure (Issue #46)
       organicCertification: {
         isCertified: form.isOrganicallyCertified,
         expiryDate: form.isOrganicallyCertified && form.certificationExpiryDate ? form.certificationExpiryDate : null,
@@ -380,35 +374,44 @@ export default function OrchardForm() {
             )}
           </div>
 
+          <Input
+            label="Video Tour URL"
+            placeholder="https://example.com/orchard-tour.mp4"
+            value={form.videoTourUrl}
+            onChange={(e) => set('videoTourUrl', e.target.value)}
+          />
+          {form.videoTourUrl && (
+            <video src={form.videoTourUrl} controls className="w-full rounded-xl mt-2 max-h-64" />
+          )}
+
           <div className="grid gap-4 sm:grid-cols-2">
             <Input label="District" value={form.district} onChange={(e) => set('district', e.target.value)} />
             <Input label="State" value={form.state} onChange={(e) => set('state', e.target.value)} />
           </div>
 
-          <Input 
-            label="Full Address / Landmark" 
-            placeholder="e.g. Near Village Gate, Highway 44, District" 
-            value={form.address} 
-            onChange={(e) => set('address', e.target.value)} 
+          <Input
+            label="Full Address / Landmark"
+            placeholder="e.g. Near Village Gate, Highway 44, District"
+            value={form.address}
+            onChange={(e) => set('address', e.target.value)}
           />
 
-          {/* Map Coordinates Block (Issue #33) */}
           <div className="grid gap-4 sm:grid-cols-2 pt-2 border-t border-sand/60">
-            <Input 
-              label="Latitude (°N)" 
-              type="number" 
+            <Input
+              label="Latitude (°N)"
+              type="number"
               step="any"
-              placeholder="e.g. 26.8467" 
-              value={form.latitude} 
-              onChange={(e) => set('latitude', parseFloat(e.target.value) || 0)} 
+              placeholder="e.g. 26.8467"
+              value={form.latitude}
+              onChange={(e) => set('latitude', parseFloat(e.target.value) || 0)}
             />
-            <Input 
-              label="Longitude (°E)" 
-              type="number" 
+            <Input
+              label="Longitude (°E)"
+              type="number"
               step="any"
-              placeholder="e.g. 80.9462" 
-              value={form.longitude} 
-              onChange={(e) => set('longitude', parseFloat(e.target.value) || 0)} 
+              placeholder="e.g. 80.9462"
+              value={form.longitude}
+              onChange={(e) => set('longitude', parseFloat(e.target.value) || 0)}
             />
           </div>
         </Card>
@@ -443,13 +446,13 @@ export default function OrchardForm() {
           <Input label="Total trees" type="number" value={form.totalTrees} onChange={(e) => set('totalTrees', Number(e.target.value))} />
           <Input label="Avg fruit / tree" type="number" value={form.averageFruitPerTree} onChange={(e) => set('averageFruitPerTree', Number(e.target.value))} />
           <Input label="Expected yield (kg)" type="number" value={form.expectedYield} onChange={(e) => set('expectedYield', Number(e.target.value))} />
-          
-          <Input 
-            label="Plantation Year" 
-            type="number" 
+
+          <Input
+            label="Plantation Year"
+            type="number"
             placeholder="e.g., 2018"
-            value={form.plantationYear} 
-            onChange={(e) => set('plantationYear', Number(e.target.value) || 2020)} 
+            value={form.plantationYear}
+            onChange={(e) => set('plantationYear', Number(e.target.value) || 2020)}
           />
 
           <div className="grid grid-cols-2 gap-3">
@@ -555,7 +558,6 @@ export default function OrchardForm() {
           </div>
         </Card>
 
-        {/* Orchard Health Parameters Section (Issue #72) */}
         <Card className="p-6 space-y-4">
           <div>
             <p className="text-sm font-semibold text-ink">Orchard Health Parameters</p>
@@ -630,17 +632,16 @@ export default function OrchardForm() {
               <option value="Poor">Poor (Neglected / Overgrown)</option>
             </Select>
 
-            <Input 
-              label="Orchard Age (in Years)" 
-              type="number" 
+            <Input
+              label="Orchard Age (in Years)"
+              type="number"
               min={0}
-              value={form.orchardAge} 
-              onChange={(e) => set('orchardAge', Number(e.target.value) || 0)} 
+              value={form.orchardAge}
+              onChange={(e) => set('orchardAge', Number(e.target.value) || 0)}
             />
           </div>
         </Card>
 
-        {/* Soil Composition Section */}
         <Card className="p-6">
           <p className="mb-3 text-sm font-semibold">Soil Composition &amp; Quality</p>
           <div className="grid gap-4 sm:grid-cols-1">
@@ -667,7 +668,6 @@ export default function OrchardForm() {
           </div>
         </Card>
 
-        {/* Water Source & Irrigation Section (Issue #43) */}
         <Card className="p-6 space-y-4">
           <div>
             <p className="text-sm font-semibold text-ink">Water Sources &amp; Irrigation Reliability</p>
@@ -738,7 +738,6 @@ export default function OrchardForm() {
           </div>
         </Card>
 
-        {/* Organic Certification Section (Issue #46) */}
         <Card className="space-y-4 p-6">
           <div className="flex items-center justify-between">
             <div>

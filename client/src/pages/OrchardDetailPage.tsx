@@ -303,6 +303,7 @@ export default function OrchardDetailPage() {
       </div>
 
       {/* Hero + gallery */}
+      {/* Hero + gallery */}
       <div className="mb-7 flex items-stretch gap-2.5">
         <div className="relative flex-1 overflow-hidden rounded-[18px]" style={{ height: 'clamp(260px,38vw,420px)', ...surface }}>
           <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg,transparent 55%,rgba(20,30,15,.4))' }} />
@@ -330,6 +331,15 @@ export default function OrchardDetailPage() {
         </div>
       </div>
 
+      {(orchard as any).videoTourUrl && (
+        <div className="mb-7">
+          <p className="mb-2 text-sm font-semibold">Video Tour</p>
+          <video src={(orchard as any).videoTourUrl} controls className="w-full rounded-2xl max-h-96" />
+        </div>
+      )}
+
+      
+       
       <div className="flex flex-wrap items-start gap-[30px]">
         {/* Left */}
         <div className="min-w-[300px] flex-[2_1_480px]">

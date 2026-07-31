@@ -30,6 +30,12 @@ export interface PerformanceRow {
   revenue: number;
   bookings: number;
 }
+export interface InquiryAnalytics {
+  totalInquiries: number;
+  avgResponseTimeHours: number | null;
+  conversionRate: number;
+  monthlyInquiryTrends: { label: string; count: number }[];
+}
 
 /* Feature #28 — per-orchard types */
 export interface OrchardAnalytics {
@@ -65,6 +71,14 @@ export const sellerService = {
     });
     return data.data;
   },
+  async inquiryAnalytics(months = 6) {
+    const { data } = await api.get<ApiResponse<InquiryAnalytics>>('/seller/inquiries/analytics', {
+      params: { months },
+    });
+    return data.data;
+  },
+
+  exportInquiriesUrl: `${import.meta.env.VITE_API_URL || '/api/v1'}/seller/inquiries/export`,
 
   /* Feature #28 — per-orchard analytics */
   async getOrchardAnalytics(id: string, months = 6) {

@@ -31,6 +31,10 @@ const questionSchema = new mongoose.Schema(
       ref: 'User',
       default: null,
     },
+    answeredAt: {
+      type: Date,
+      default: null,
+    },
     isOfficialAnswer: {
       type: Boolean,
       default: false,
